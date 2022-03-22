@@ -49,50 +49,53 @@ void MicroMouse::setDirection(int dir)
     Serial.println(RMS);
     Serial.print(F("LMS: "));
     Serial.println(RMS);
+    Serial.print(F("Direction: "));
+    Serial.println(dir);
     if (dir == FORWARD)
     {
         RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD);
-        // digitalWrite(LEFT_MOTOR_FORWARD_PIN, LOW); // Left wheel forward
-        // digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
         RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD);
-        // digitalWrite(RIGHT_MOTOR_FORWARD_PIN, LOW); // Right wheel forward
-        // digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH);
+        /*         digitalWrite(LEFT_MOTOR_FORWARD_PIN, LOW); // Left wheel forward
+                digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
+
+                digitalWrite(RIGHT_MOTOR_FORWARD_PIN, LOW); // Right wheel forward
+                digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH); */
     }
     else if (dir == LEFT)
     {
         RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD);
-        // digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel reverse
-        // digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
         RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD);
-        // digitalWrite(RIGHT_MOTOR_FORWARD_PIN, LOW); // Right wheel forward
-        // digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH);
+        /*         digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel reverse
+                digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
+                digitalWrite(RIGHT_MOTOR_FORWARD_PIN, LOW); // Right wheel forward
+                digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH); */
     }
     else if (dir == RIGHT)
     {
         RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD);
-        // digitalWrite(LEFT_MOTOR_FORWARD_PIN, LOW); // Left wheel forward
-        // digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
         RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD);
-        // digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel reverse
-        // digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW);
+        /*         digitalWrite(LEFT_MOTOR_FORWARD_PIN, LOW); // Left wheel forward
+                digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
+                digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel reverse
+                digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW); */
     }
     else if (dir == STOP)
     {
         RobotCarPWMMotorControl.leftCarMotor.stop(MOTOR_BRAKE);
-        // digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel stop
-        // digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
-        RobotCarPWMMotorControl.leftCarMotor.stop(MOTOR_BRAKE);
-        // digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel stop
-        // digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH);
+        RobotCarPWMMotorControl.rightCarMotor.stop(MOTOR_BRAKE);
+        /*         digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel stop
+                digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
+                digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel stop
+                digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH); */
     }
     else if (dir == BACKWARD)
     {
         RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD);
-        // digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel reverse
-        // digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
         RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD);
-        // digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel backward
-        // digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW);
+        /*         digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel reverse
+                digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
+                digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel backward
+                digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW); */
     }
 }
 
@@ -187,17 +190,21 @@ void MicroMouse::PID(boolean left)
 {
     // Rearrange the checks to reduce the lines of code. If first turn is false, subtract zero, else return a positive offset if left is true, and a negative offset if left is false.
 
-    //Serial.print("first_turn: ");
-    //Serial.println(first_turn);
+    // Serial.print("first_turn: ");
+    // Serial.println(first_turn);
+    Serial.print("Left: ");
+    Serial.println(left);
+    Serial.print("Offset: ");
+    Serial.println(offset);
     float errorP = Sensor[Left][Average] - Sensor[Right][Average] - (first_turn ? (left ? offset : -offset) : 0);
-    //Serial.print("errorP: ");
-    //Serial.println(errorP);
+    Serial.print("errorP: ");
+    Serial.println(errorP);
     float errorD = errorP - oldErrorP;
-    //Serial.print("errorD: ");
-    //Serial.println(errorD);
+    // Serial.print("errorD: ");
+    // Serial.println(errorD);
     float errorI = (2.0 / 3.0) * errorI + errorP;
-    //Serial.print("errorI: ");
-    //Serial.println(errorI);
+    // Serial.print("errorI: ");
+    // Serial.println(errorI);
     totalError = P * errorP + D * errorD + I * errorI;
     oldErrorP = errorP;
 
@@ -429,28 +436,29 @@ void MicroMouse::runInLoop()
                 // digitalWrite(LED, HIGH);
             }
         } */
-    if (Sensor[Left][Average] == 0 || Sensor[Left][Average] > 100 && Sensor[Right][Average] == 0 || Sensor[Right][Average] > 100 && Sensor[Front][Average] == 0 || Sensor[Front][Average] > 100)
+    if (Sensor[Left][Average] < 3 || Sensor[Left][Average] > 100 && Sensor[Right][Average] < 3 || Sensor[Right][Average] > 100 && Sensor[Front][Average] < 3 || Sensor[Front][Average] > 100)
     {
-        // This is where I need to implement the 180 degree rotation using the MPU-6050.
+        // Serial.println("Stop");
+        //  This is where I need to implement the 180 degree rotation using the MPU-6050.
         setDirection(STOP);
     }
 
-       // read sensors & print the result to the serial monitor //
+    // read sensors & print the result to the serial monitor //
 
-        Serial.print(" Left : ");
-        Serial.print(Sensor[Left][Average]);
-        Serial.print(" cm ");
-        Serial.print(" Right : ");
-        Serial.print(Sensor[Right][Average]);
-        Serial.print(" cm ");
-        Serial.print(" Front : ");
-        Serial.print(Sensor[Front][Average]);
-        Serial.println(" cm ");
+    Serial.print(" Left : ");
+    Serial.print(Sensor[Left][Average]);
+    Serial.print(" cm ");
+    Serial.print(" Right : ");
+    Serial.print(Sensor[Right][Average]);
+    Serial.print(" cm ");
+    Serial.print(" Front : ");
+    Serial.print(Sensor[Front][Average]);
+    Serial.println(" cm ");
 
-        // measure error & print the result to the serial monitor
+    // measure error & print the result to the serial monitor
 
-        Serial.print("error=");
-        Serial.println(totalError); 
+    Serial.print("error=");
+    Serial.println(totalError);
 }
 
 void MicroMouse::errorDecoder(SHTC3_Status_TypeDef message) // The errorDecoder function prints "SHTC3_Status_TypeDef" resultsin a human-friendly way

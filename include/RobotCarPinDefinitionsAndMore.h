@@ -73,102 +73,100 @@
  */
 
 #if defined(USE_ENCODER_MOTOR_CONTROL)
-#define RIGHT_MOTOR_INTERRUPT       PB8 // Pin 2
-#define LEFT_MOTOR_INTERRUPT        PB9 // Pin 3
+#define RIGHT_MOTOR_INTERRUPT PB8 // Pin 2
+#define LEFT_MOTOR_INTERRUPT PB9  // Pin 3
 #else
 #if defined(CAR_HAS_IR_DISTANCE_SENSOR)
-#define US_DISTANCE_SENSOR_ENABLE_PIN   3 // If this pin is connected to ground, use the US distance sensor instead of the IR distance sensor
+#define US_DISTANCE_SENSOR_ENABLE_PIN 3 // If this pin is connected to ground, use the US distance sensor instead of the IR distance sensor
 #endif
 
 #endif
 
 #if defined(USE_ADAFRUIT_MOTOR_SHIELD)
-#define IR_INPUT_PIN                9 // on Adafruit Motor Shield marked as Servo Nr. 2
+#define IR_INPUT_PIN 9 // on Adafruit Motor Shield marked as Servo Nr. 2
 #else
-//2 + 3 are reserved for encoder input
-// #define RIGHT_MOTOR_FORWARD_PIN     PA3 // IN4 <- Label on the L298N board
-// #define RIGHT_MOTOR_BACKWARD_PIN    PA2 // IN3
-// #define RIGHT_MOTOR_PWM_PIN         PA1 // ENB - Must be PWM capable
+// 2 + 3 are reserved for encoder input
+//  #define RIGHT_MOTOR_FORWARD_PIN     PA2 // IN4 <- Label on the L298N board
+//  #define RIGHT_MOTOR_BACKWARD_PIN    PA3 // IN3
+//  #define RIGHT_MOTOR_PWM_PIN         PA1 // ENB - Must be PWM capable
 
-// #define LEFT_MOTOR_FORWARD_PIN      PA6 // IN1
-// #define LEFT_MOTOR_BACKWARD_PIN     PA4 // IN2
+// #define LEFT_MOTOR_FORWARD_PIN      PA4 // IN1
+// #define LEFT_MOTOR_BACKWARD_PIN     PA6 // IN2
 // #define LEFT_MOTOR_PWM_PIN          PA5 // ENA - Must be PWM capable
 
-#define LEFT_MOTOR_FORWARD_PIN     PA2 // IN4 <- Label on the L298N board
-#define LEFT_MOTOR_BACKWARD_PIN    PA3 // IN3
-#define LEFT_MOTOR_PWM_PIN         PA1 // ENB - Must be PWM capable
+#define LEFT_MOTOR_FORWARD_PIN PA2  // IN4 <- Label on the L298N board
+#define LEFT_MOTOR_BACKWARD_PIN PA3 // IN3
+#define LEFT_MOTOR_PWM_PIN PA1      // ENB - Must be PWM capable
 
-#define RIGHT_MOTOR_FORWARD_PIN      PA4 // IN1
-#define RIGHT_MOTOR_BACKWARD_PIN     PA6 // IN2
-#define RIGHT_MOTOR_PWM_PIN          PA5 // ENA - Must be PWM capable
-
+#define RIGHT_MOTOR_FORWARD_PIN PA4  // IN1
+#define RIGHT_MOTOR_BACKWARD_PIN PA6 // IN2
+#define RIGHT_MOTOR_PWM_PIN PA5      // ENA - Must be PWM capable
 
 //#define IR_INPUT_PIN               11
 #endif
 
-//Servo pins
+// Servo pins
 #if defined(CAR_HAS_PAN_SERVO)
-#define PIN_DISTANCE_SERVO         10 // Servo Nr. 2 on Adafruit Motor Shield - can be controlled by LightweightServo library
-#define PIN_PAN_SERVO              11
+#define PIN_DISTANCE_SERVO 10 // Servo Nr. 2 on Adafruit Motor Shield - can be controlled by LightweightServo library
+#define PIN_PAN_SERVO 11
 #endif
 #if defined(CAR_HAS_TILT_SERVO)
-#define PIN_TILT_SERVO             12
-#define PIN_BUZZER                 A6
+#define PIN_TILT_SERVO 12
+#define PIN_BUZZER A6
 #else
 //#define PIN_BUZZER                 12
 #endif
 
-// For I2C Wire 
+// For I2C Wire
 #define SDA PB7
 #define SCL PB6
 #define WIRE_SPEED 400000
 
 // For HCSR04 ultrasonic distance sensor
-#define PIN_TRIGGER_OUT_RIGHT       PB5 
-#define PIN_TRIGGER_OUT_FRONT       PB3 
-#define PIN_TRIGGER_OUT_LEFT       PA10 
+#define PIN_TRIGGER_OUT_RIGHT PB5
+#define PIN_TRIGGER_OUT_FRONT PB3
+#define PIN_TRIGGER_OUT_LEFT PA10
 
 #if !defined(US_SENSOR_SUPPORTS_1_PIN_MODE)
-#define PIN_ECHO_IN_RIGHT           PB4
-#define PIN_ECHO_IN_FRONT          PA15
-#define PIN_ECHO_IN_LEFT           PA9
+#define PIN_ECHO_IN_RIGHT PB4
+#define PIN_ECHO_IN_FRONT PA15
+#define PIN_ECHO_IN_LEFT PA9
 #endif
 //#define PIN_IR_DISTANCE_SENSOR     A3 // Sharp IR distance sensor
 
 #if defined(CAR_HAS_VIN_VOLTAGE_DIVIDER)
 // Pin A0 for VCC monitoring - ADC channel 2
 // Assume an attached resistor network of 100k / 10k from VCC to ground (divider by 11)
-#define VIN_11TH_IN_CHANNEL         2 // = A2
-#define PIN_VIN_11TH_IN            A2
+#define VIN_11TH_IN_CHANNEL 2 // = A2
+#define PIN_VIN_11TH_IN A2
 #endif
 
 #if defined(LASER_MOUNTED)
-#define PIN_LASER_OUT               LED_BUILTIN
+#define PIN_LASER_OUT LED_BUILTIN
 #endif
 
 #if defined(CAR_HAS_CAMERA)
-#define PIN_CAMERA_SUPPLY_CONTROL  A7
+#define PIN_CAMERA_SUPPLY_CONTROL A7
 #endif
 
 #elif defined(ESP32)
-#define RIGHT_MOTOR_FORWARD_PIN    17 // IN4 <- Label on the L298N board
-#define RIGHT_MOTOR_BACKWARD_PIN   18 // IN3
-#define RIGHT_MOTOR_PWM_PIN        16 // ENB - Must be PWM capable
+#define RIGHT_MOTOR_FORWARD_PIN 17  // IN4 <- Label on the L298N board
+#define RIGHT_MOTOR_BACKWARD_PIN 18 // IN3
+#define RIGHT_MOTOR_PWM_PIN 16      // ENB - Must be PWM capable
 
 // Suited for ESP32-CAM
-#define LEFT_MOTOR_FORWARD_PIN     14 // IN1
-#define LEFT_MOTOR_BACKWARD_PIN    15 // IN2
-#define LEFT_MOTOR_PWM_PIN         13 // ENA - Must be PWM capable
+#define LEFT_MOTOR_FORWARD_PIN 14   // IN1
+#define LEFT_MOTOR_BACKWARD_PIN 15  // IN2
+#define LEFT_MOTOR_PWM_PIN 13       // ENA - Must be PWM capable
 
 // Not tested :-(
-#define RIGHT_MOTOR_INTERRUPT      12
-#define LEFT_MOTOR_INTERRUPT        2
+#define RIGHT_MOTOR_INTERRUPT 12
+#define LEFT_MOTOR_INTERRUPT 2
 
-#define PIN_TRIGGER_OUT            25
-#define PIN_ECHO_IN                26
-#define PIN_DISTANCE_SERVO         27 // Servo Nr. 2 on Adafruit Motor Shield
-#define PIN_BUZZER                 23
-
+#define PIN_TRIGGER_OUT 25
+#define PIN_ECHO_IN 26
+#define PIN_DISTANCE_SERVO 27 // Servo Nr. 2 on Adafruit Motor Shield
+#define PIN_BUZZER 23
 
 // for ESP32 LED_BUILTIN is defined as: static const uint8_t LED_BUILTIN 2
 #if !defined(LED_BUILTIN) && !defined(ESP32)

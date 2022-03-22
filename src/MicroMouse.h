@@ -13,7 +13,7 @@ class MicroMouse
 public:
     static inline SHTC3 mySHTC3;
 
-    static const short MAX_DISTANCE = 500;
+    static const short MAX_DISTANCE = 200;
     static inline UltraSonicDistanceSensor sensorArray[3] = {
         UltraSonicDistanceSensor(PIN_TRIGGER_OUT_LEFT, PIN_ECHO_IN_LEFT, MAX_DISTANCE),
         UltraSonicDistanceSensor(PIN_TRIGGER_OUT_FRONT, PIN_ECHO_IN_FRONT, MAX_DISTANCE),
