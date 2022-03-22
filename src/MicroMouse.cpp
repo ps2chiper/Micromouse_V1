@@ -45,6 +45,10 @@ void MicroMouse::updateTempC()
 
 void MicroMouse::setDirection(int dir)
 {
+    Serial.print(F("RMS: "));
+    Serial.println(RMS);
+    Serial.print(F("LMS: "));
+    Serial.println(RMS);
     if (dir == FORWARD)
     {
         RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD);
@@ -120,17 +124,17 @@ void MicroMouse::ReadSensors()
         // Sensor[i][Old] = Sensor[i][Average];
     }
 
-    /*     // lSensor = sonarLeft.measureDistanceCm(temperatureCentigrade); // ping in cm
-        // rSensor = sonarRight.measureDistanceCm(temperatureCentigrade);
-        // fSensor = sonarFront.measureDistanceCm(temperatureCentigrade);
+    // lSensor = sonarLeft.measureDistanceCm(temperatureCentigrade); // ping in cm
+    // rSensor = sonarRight.measureDistanceCm(temperatureCentigrade);
+    // fSensor = sonarFront.measureDistanceCm(temperatureCentigrade);
 
-        // Sensor[Left][Average] = (Sensor[Left][New] + Sensor[Left][Old]) / 2;    // average distance between old & new readings to make the change smoother
-        // Sensor[Right][Average] = (Sensor[Right][New] + Sensor[Right][Old]) / 2; // It will truncate by division, maybe that is needed.
-        // Sensor[Front][Average] = (Sensor[Front][New] + Sensor[Front][Old]) / 2;
+    // Sensor[Left][Average] = (Sensor[Left][New] + Sensor[Left][Old]) / 2;    // average distance between old & new readings to make the change smoother
+    // Sensor[Right][Average] = (Sensor[Right][New] + Sensor[Right][Old]) / 2; // It will truncate by division, maybe that is needed.
+    // Sensor[Front][Average] = (Sensor[Front][New] + Sensor[Front][Old]) / 2;
 
-        // Sensor[Left][Old] = Sensor[Left][Average]; // save old readings for movment
-        // Sensor[Right][Old] = Sensor[Right][Average];
-        // Sensor[Front][Old] = Sensor[Front][Average]; */
+    // Sensor[Left][Old] = Sensor[Left][Average]; // save old readings for movment
+    // Sensor[Right][Old] = Sensor[Right][Average];
+    // Sensor[Front][Old] = Sensor[Front][Average];
 }
 
 // void MicroMouse::pid_start()
@@ -182,9 +186,18 @@ void MicroMouse::ReadSensors()
 void MicroMouse::PID(boolean left)
 {
     // Rearrange the checks to reduce the lines of code. If first turn is false, subtract zero, else return a positive offset if left is true, and a negative offset if left is false.
-    float errorP = Sensor[Left] - Sensor[Right] - (first_turn ? (left ? offset : -offset) : 0);
+
+    //Serial.print("first_turn: ");
+    //Serial.println(first_turn);
+    float errorP = Sensor[Left][Average] - Sensor[Right][Average] - (first_turn ? (left ? offset : -offset) : 0);
+    //Serial.print("errorP: ");
+    //Serial.println(errorP);
     float errorD = errorP - oldErrorP;
+    //Serial.print("errorD: ");
+    //Serial.println(errorD);
     float errorI = (2.0 / 3.0) * errorI + errorP;
+    //Serial.print("errorI: ");
+    //Serial.println(errorI);
     totalError = P * errorP + D * errorD + I * errorI;
     oldErrorP = errorP;
 
@@ -332,8 +345,7 @@ void MicroMouse::turnleft()
     LMS = RMS * Sensor[Left][Average] / (Sensor[Left][Average] + 11);
 }
 
-
-// This is a wall hugging mode. 
+// This is a wall hugging mode.
 void MicroMouse::runInLoop()
 {
 
@@ -423,22 +435,22 @@ void MicroMouse::runInLoop()
         setDirection(STOP);
     }
 
-    // read sensors & print the result to the serial monitor //
+       // read sensors & print the result to the serial monitor //
 
-    Serial.print(" Left : ");
-    Serial.print(Sensor[Left][Average]);
-    Serial.print(" cm ");
-    Serial.print(" Right : ");
-    Serial.print(Sensor[Right][Average]);
-    Serial.print(" cm ");
-    Serial.print(" Front : ");
-    Serial.print(Sensor[Front][Average]);
-    Serial.println(" cm ");
+        Serial.print(" Left : ");
+        Serial.print(Sensor[Left][Average]);
+        Serial.print(" cm ");
+        Serial.print(" Right : ");
+        Serial.print(Sensor[Right][Average]);
+        Serial.print(" cm ");
+        Serial.print(" Front : ");
+        Serial.print(Sensor[Front][Average]);
+        Serial.println(" cm ");
 
-    // measure error & print the result to the serial monitor
+        // measure error & print the result to the serial monitor
 
-    Serial.print("error=");
-    Serial.println(totalError);
+        Serial.print("error=");
+        Serial.println(totalError); 
 }
 
 void MicroMouse::errorDecoder(SHTC3_Status_TypeDef message) // The errorDecoder function prints "SHTC3_Status_TypeDef" resultsin a human-friendly way
@@ -1014,45 +1026,45 @@ void MicroMouse::floodFillUpdate(coord currCoord, coord desired[])
 
 void MicroMouse::floodFill(coord desired[], coord current, boolean isMoving)
 {
-  //coord desired[4] = {{X - 1, Y - 1}, {X - 1, Y}, {X, Y - 1}, {X, Y}};
-  coord currCoord = current;
-  byte heading = globalHeading;
-  /*Integer representation of heading
-   * 1 = N
-   * 4 = E
-   * 2 = S
-   * 8 = W
-   */
-  while (maze[currCoord.y][currCoord.x].distance != 0)
-  {
-    floodFillUpdate(currCoord, desired);
-    byte nextHeading = orient(currCoord, heading);
-    coord nextCoord = bearingCoord(currCoord, nextHeading);
-
-/*     if (isMoving)
+    // coord desired[4] = {{X - 1, Y - 1}, {X - 1, Y}, {X, Y - 1}, {X, Y}};
+    coord currCoord = current;
+    byte heading = globalHeading;
+    /*Integer representation of heading
+     * 1 = N
+     * 4 = E
+     * 2 = S
+     * 8 = W
+     */
+    while (maze[currCoord.y][currCoord.x].distance != 0)
     {
-      // Call createInstruction to push a new instruction to the stack
-      instructions.push(createInstruction(currCoord, nextCoord, nextHeading));
+        floodFillUpdate(currCoord, desired);
+        byte nextHeading = orient(currCoord, heading);
+        coord nextCoord = bearingCoord(currCoord, nextHeading);
 
-      // Pop the next instruction from the instructions queue and execute it
-      executeInstruction(instructions.pop());
-    } */
+        /*     if (isMoving)
+            {
+              // Call createInstruction to push a new instruction to the stack
+              instructions.push(createInstruction(currCoord, nextCoord, nextHeading));
 
-    // After exectuing the instruction update the values of the local and global variables
-    currCoord = nextCoord;
-    heading = nextHeading;
-    // If the robot has actually moved, update the global position variables
-    if (isMoving)
-    {
-      globalHeading = heading;
-      globalCoord = currCoord;
+              // Pop the next instruction from the instructions queue and execute it
+              executeInstruction(instructions.pop());
+            } */
+
+        // After exectuing the instruction update the values of the local and global variables
+        currCoord = nextCoord;
+        heading = nextHeading;
+        // If the robot has actually moved, update the global position variables
+        if (isMoving)
+        {
+            globalHeading = heading;
+            globalCoord = currCoord;
+        }
     }
-  }
-  // Set the global end as the current coordinate.
-  globalEnd = currCoord;
+    // Set the global end as the current coordinate.
+    globalEnd = currCoord;
 }
 
-/* 
+/*
 void loop()
 {
   coord desired[] = {{X - 1, Y - 1}, {X - 1, Y}, {X, Y - 1}, {X, Y}};

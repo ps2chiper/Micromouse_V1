@@ -75,10 +75,17 @@ void setup()
 
   // Print info
   PWMDcMotor::printSettings(&Serial);
-  // RobotCarPWMMotorControl.rightCarMotor.wheelGoDistanceTicks(100L, 200, DIRECTION_FORWARD);
-  // RobotCarPWMMotorControl.leftCarMotor.wheelGoDistanceTicks(100L, 200, DIRECTION_FORWARD);
+  //RobotCarPWMMotorControl.rightCarMotor.wheelGoDistanceTicks(100L, 255, DIRECTION_FORWARD);
+  //RobotCarPWMMotorControl.leftCarMotor.wheelGoDistanceTicks(100L, 255, DIRECTION_FORWARD);
+  //delay(1000);
+  //RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(255, DIRECTION_FORWARD);
+  //RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(255, DIRECTION_FORWARD);
+  // RobotCarPWMMotorControl.leftCarMotor.updateDriveSpeedPWM(255);
+  // RobotCarPWMMotorControl.leftCarMotor.start(DIRECTION_FORWARD);
+  //RobotCarPWMMotorControl.leftCarMotor.wheelGoDistanceTicks(100L, 255, DIRECTION_FORWARD);
+  //delay(1000);
 
-  // RobotCarPWMMotorControl.rotate(-90, TURN_IN_PLACE);
+  //RobotCarPWMMotorControl.rotate(-90, TURN_IN_PLACE);
 
   Runner.init();
   Serial.print("TempC is: ");
@@ -120,4 +127,3 @@ void Thread1(void *pvParameters __attribute__((unused))) // This is a Task.
     Runner.runInLoop();
   }
 }
-

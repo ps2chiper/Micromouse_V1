@@ -41,11 +41,13 @@ public:
     #define LEFT 3
     #define RIGHT 4
     */
-    const int baseSpeed = 70;
+   // Set base speed to make the micromouse move. 
+    const int baseSpeed = 120;
     const float P = 0.7;
     const float D = 0.5;
     const float I = 0.4;
 
+    // What is the offset for?
     const int offset = 5;
 
     const int wall_threshold = 13;
