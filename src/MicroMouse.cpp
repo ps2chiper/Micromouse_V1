@@ -24,6 +24,19 @@ void MicroMouse::init()
     {
         updateTempC();
     }
+    humidity = MicroMouse::mySHTC3.toPercent();
+    soundsp = 331.4 + (0.606 * temperatureCentigrade) + (0.0124 * humidity);
+    soundcm = soundsp / 10000.0;
+    pinMode(LEFT_MOTOR_FORWARD_PIN, OUTPUT);
+    pinMode(LEFT_MOTOR_BACKWARD_PIN, OUTPUT);
+    pinMode(RIGHT_MOTOR_FORWARD_PIN, OUTPUT);
+    pinMode(RIGHT_MOTOR_BACKWARD_PIN, OUTPUT);
+    myPID = new PID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+    //Input = sensorArray[Left].ping_median();
+    Setpoint = 7;
+    myPID->SetMode(AUTOMATIC);
+    myPID->SetOutputLimits(-4, 4);
+
 }
 
 void MicroMouse::setTempC(float temp)
@@ -48,54 +61,63 @@ void MicroMouse::setDirection(int dir)
     Serial.print(F("RMS: "));
     Serial.println(RMS);
     Serial.print(F("LMS: "));
-    Serial.println(RMS);
+    Serial.println(LMS);
     Serial.print(F("Direction: "));
     Serial.println(dir);
     if (dir == FORWARD)
     {
-        RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD);
-        RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD);
-        /*         digitalWrite(LEFT_MOTOR_FORWARD_PIN, LOW); // Left wheel forward
-                digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
+        // RobotCarPWMMotorControl.goDistanceMillimeter(100);
+        // delay(400);
+        // RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(LMS, DIRECTION_FORWARD);
+        // RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD);
+        // RobotCarPWMMotorControl.leftCarMotor.goDistanceMillimeter();
+        // RobotCarPWMMotorControl.rightCarMotor.goDistanceMillimeter(RMS,DIRECTION_FORWARD);
 
-                digitalWrite(RIGHT_MOTOR_FORWARD_PIN, LOW); // Right wheel forward
-                digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH); */
+        digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel forward
+        digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
+        digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel forward
+        digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW);
+        Serial.println("FORWARD");
     }
     else if (dir == LEFT)
     {
-        RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD);
-        RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD);
-        /*         digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel reverse
-                digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
-                digitalWrite(RIGHT_MOTOR_FORWARD_PIN, LOW); // Right wheel forward
-                digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH); */
+        /*         RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(LMS, DIRECTION_BACKWARD);
+                RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD); */
+        digitalWrite(LEFT_MOTOR_FORWARD_PIN, LOW); // Left wheel reverse
+        digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
+        digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel forward
+        digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW);
+        Serial.println("LEFT");
     }
     else if (dir == RIGHT)
     {
-        RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD);
-        RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD);
-        /*         digitalWrite(LEFT_MOTOR_FORWARD_PIN, LOW); // Left wheel forward
-                digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
-                digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel reverse
-                digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW); */
+        /*         RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(LMS, DIRECTION_FORWARD);
+                RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD); */
+        digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel forward
+        digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
+        digitalWrite(RIGHT_MOTOR_FORWARD_PIN, LOW); // Right wheel reverse
+        digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH);
+        Serial.println("RIGHT");
     }
     else if (dir == STOP)
     {
-        RobotCarPWMMotorControl.leftCarMotor.stop(MOTOR_BRAKE);
-        RobotCarPWMMotorControl.rightCarMotor.stop(MOTOR_BRAKE);
-        /*         digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel stop
-                digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
-                digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel stop
-                digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH); */
+        /*         RobotCarPWMMotorControl.leftCarMotor.stop(MOTOR_BRAKE);
+                RobotCarPWMMotorControl.rightCarMotor.stop(MOTOR_BRAKE); */
+        digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel stop
+        digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
+        digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel stop
+        digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH);
+        Serial.println("STOP");
     }
     else if (dir == BACKWARD)
     {
-        RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD);
-        RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD);
-        /*         digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel reverse
-                digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
-                digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel backward
-                digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW); */
+        /*        RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(LMS, DIRECTION_BACKWARD);
+               RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD); */
+        digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel reverse
+        digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
+        digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel backward
+        digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW);
+        Serial.println("BACKWARD");
     }
 }
 
@@ -115,17 +137,25 @@ void MicroMouse::ReadSensors()
         // Sensor[Front][New] = sensorArray[Right].measureDistanceCm(temperatureCentigrade); */
 
     // Prehaps combine this into one for loop if the timing allows.
+    // SensorPing[Left] = sensorArray[Left].ping_median(5, temperatureCentigrade);
+    // SensorPing[Right] = sensorArray[Right].ping_median(5, temperatureCentigrade);
+
     for (uint8_t i = 0; i < 3; i++)
     {
         // This may possibly work. I just don't like that the robot is in motion while it is performing these calculations.
-        // Sensor[i][Old] = Sensor[i][Average] = ((Sensor[i][New] = sensorArray[i].measureDistanceCm(temperatureCentigrade)) + Sensor[i][Old]) / 2;
-        Sensor[i][New] = sensorArray[i].measureDistanceCm(temperatureCentigrade);
+        Sensor[i][Old] = Sensor[i][Average] = (sensorArray[i].ping_cm(MAX_DISTANCE) + Sensor[i][Old]) / 2.0;
+        //SensorPing[i] = sensorArray[i].ping_median(5);
+        //Sensor[i][Average] = (SensorPing[i] / 2.0) * soundcm - 2.0;
+        //delay(12);
+        // Sensor[i][Average] = sensorArray[i].ping_medianCM(10, temperatureCentigrade);
+        //  delay(30);
+        //   Sensor[i][New] = sensorArray[i].measureDistanceCm(temperatureCentigrade);
     }
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        Sensor[i][Old] = Sensor[i][Average] = (Sensor[i][New] + Sensor[i][Old]) / 2;
-        // Sensor[i][Old] = Sensor[i][Average];
-    }
+    // for (uint8_t i = 0; i < 3; i++)
+    /*     {
+            Sensor[i][Old] = Sensor[i][Average] = (Sensor[i][New] + Sensor[i][Old]) / 2;
+            // Sensor[i][Old] = Sensor[i][Average];
+        } */
 
     // lSensor = sonarLeft.measureDistanceCm(temperatureCentigrade); // ping in cm
     // rSensor = sonarRight.measureDistanceCm(temperatureCentigrade);
@@ -151,8 +181,8 @@ void MicroMouse::ReadSensors()
 //     totalError = P * errorP + D * errorD + I * errorI;
 //     oldErrorP = errorP;
 
-//     /*     RMS = baseSpeed + totalError;
-//         LMS = baseSpeed - totalError; */
+//         RMS = baseSpeed + totalError;
+//         LMS = baseSpeed - totalError;
 
 //     //  if(RMS < -255) RMS = -255; if(RMS > 255)RMS = 255 ;
 //     //  if(LMS < -255) LMS = -255;  if(LMS > 255)LMS = 255 ;
@@ -186,27 +216,28 @@ void MicroMouse::ReadSensors()
 //     }
 // }
 
-void MicroMouse::PID(boolean left)
+void MicroMouse::PIDcalculate(boolean left)
 {
     // Rearrange the checks to reduce the lines of code. If first turn is false, subtract zero, else return a positive offset if left is true, and a negative offset if left is false.
 
     // Serial.print("first_turn: ");
     // Serial.println(first_turn);
-    Serial.print("Left: ");
-    Serial.println(left);
-    Serial.print("Offset: ");
-    Serial.println(offset);
-    float errorP = Sensor[Left][Average] - Sensor[Right][Average] - (first_turn ? (left ? offset : -offset) : 0);
-    Serial.print("errorP: ");
-    Serial.println(errorP);
-    float errorD = errorP - oldErrorP;
+    // Serial.print("Left: ");
+    // Serial.println(left);
+    // Serial.print("Offset: ");
+    // Serial.println(offset);
+    // long errorP = Sensor[Left][Average] - Sensor[Right][Average]; // - (first_turn ? (left ? offset : -offset) : 0);
+    // errorP = SensorPing[Left] - SensorPing[Right];
+    // Serial.print("errorP: ");
+    // Serial.println(errorP);
+    // float errorD = errorP - oldErrorP;
     // Serial.print("errorD: ");
     // Serial.println(errorD);
-    float errorI = (2.0 / 3.0) * errorI + errorP;
+    // errorI = (2.0 / 3.0) * errorI + errorP;
     // Serial.print("errorI: ");
     // Serial.println(errorI);
-    totalError = P * errorP + D * errorD + I * errorI;
-    oldErrorP = errorP;
+    // totalError = P2 * errorP + /*D * errorD + */ I2 * errorI;
+    // oldErrorP = errorP;
 
     // if (left == true)
     //{
@@ -218,40 +249,107 @@ void MicroMouse::PID(boolean left)
             // totalError = P * errorP + D * errorD + I * errorI;
 
             // oldErrorP = errorP; */
+    while (Sensor[Left][Average] < 3.0 || Sensor[Left][Average] > 10)
+    {
+        SensorPing[Left] = sensorArray[Left].ping_median(5);
+        Sensor[Left][Average] = (SensorPing[Left] / 2.0) * soundcm;
+        delay(12);
+        setDirection(STOP);
+    }
+    //while(Sensor[Left][Average] > 10)
+    {
+        //Sensor[Left][Average] = 0.0;
+    }
+    Input = Sensor[Left][Average];
 
-    RMS = baseSpeed + totalError;
-    LMS = baseSpeed - totalError;
+    //double gap = abs(Setpoint - Input); // distance away from setpoint
+/*     if (gap < 1)
+    { // we're close to setpoint, use conservative tuning parameters
+        myPID->SetTunings(consKp, consKi, consKd);
+    }
+    else
+    {
+        // we're far from setpoint, use aggressive tuning parameters
+        myPID->SetTunings(aggKp, aggKi, aggKd);
+    } */
+    myPID->Compute();
+    RMS = baseSpeed[Right];// - Output;
+    LMS = baseSpeed[Left] + Output;
+    Serial.print("Output: ");
+    Serial.println(Output);
 
     /* //  if(RMS < -255) RMS = -255; if(RMS > 255)RMS = 255 ;
     //  if(LMS < -255) LMS = -255;  if(LMS > 255)LMS = 255 ; */
 
-    if (RMS < 0)
+    // if (RMS < 0)
+    // {
+
+    //     RMS = map(RMS, 0, -255, 0, 255);
+
+    //     analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
+    //     analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
+
+    //     setDirection(RIGHT);
+    // }
+    // else if (LMS < 0)
+    // {
+    //     LMS = map(LMS, 0, -255, 0, 255);
+
+    //     analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
+    //     analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
+
+    //     setDirection(LEFT);
+    // }
+    // else
+    analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
+    analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
+    if (false)
     {
-
-        RMS = map(RMS, 0, -255, 0, 255);
-
-        // analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-        // analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
-
-        setDirection(RIGHT);
+        if (Sensor[Left][Average] <= 4)
+        {
+            //digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel reverse
+            //digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
+            //digitalWrite(RIGHT_MOTOR_FORWARD_PIN, LOW); // Right wheel forward
+            //digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH);
+            setDirection(RIGHT);
+            delay(10);
+            // setDirection(STOP);
+            //delay(100);
+            //Sensor[Left][Old] = Sensor[Left][Average] = (sensorArray[Left].measureDistanceCm(temperatureCentigrade) + Sensor[Left][Old]) / 2;
+        }
+        // else if ((Sensor[Left][Average] >= 10 || Sensor[Left][Average] < 2) && false)
+        // {
+        //     digitalWrite(LEFT_MOTOR_FORWARD_PIN, LOW); // Left wheel off
+        //     digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
+        //     digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel forward
+        //     digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW);
+        //     //  This is where I need to implement the 180 degree rotation using the MPU-6050.
+        //     // setDirection(STOP);
+        //     // setDirection(STOP);
+        //     // analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
+        //     // analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
+        //     //setDirection(LEFT);
+        //     //delay(100);
+        //     // setDirection(STOP);
+        //     //delay(50);
+        //     // Sensor[Left][Old] = Sensor[Left][Average] = (sensorArray[Left].measureDistanceCm(temperatureCentigrade) + Sensor[Left][Old]) / 2;
+        // }
     }
-    else if (LMS < 0)
+    // if (Sensor[Left][Average] > 5 && Sensor[Left][Average] < 10)
     {
-        LMS = map(LMS, 0, -255, 0, 255);
-
-        // analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-        // analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
-
-        setDirection(LEFT);
-    }
-    else
-    {
-
-        // analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-        // analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
 
         setDirection(FORWARD);
+        // delay(100);
     }
+    // while (Sensor[Left][Average] < 2)
+    // {
+
+    //     analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
+    //     analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
+    //     setDirection(STOP);
+    //     Sensor[Left][Average] = sensorArray[left].ping_medianCM(5, temperatureCentigrade);
+    // }
+
     //}
     // /* else
     // {
@@ -370,7 +468,7 @@ void MicroMouse::runInLoop()
     if (leftWallFollow || rightWallFollow || !first_turn)
     {
         // If leftWallFollow or rightWallFollow are true, then juse use the boolean of leftWallFollow as the argument.
-        PID(leftWallFollow);
+        PIDcalculate(leftWallFollow);
     }
     /*     else if (leftWallFollow == true)
         {
@@ -385,7 +483,7 @@ void MicroMouse::runInLoop()
     {
         if (wall[Left] != wall[Right])
         {
-            PID(!wall[Left]);
+            PIDcalculate(!wall[Left]);
             if (!first_turn)
             {
 
@@ -436,12 +534,12 @@ void MicroMouse::runInLoop()
                 // digitalWrite(LED, HIGH);
             }
         } */
-    if (Sensor[Left][Average] < 3 || Sensor[Left][Average] > 100 && Sensor[Right][Average] < 3 || Sensor[Right][Average] > 100 && Sensor[Front][Average] < 3 || Sensor[Front][Average] > 100)
-    {
-        // Serial.println("Stop");
-        //  This is where I need to implement the 180 degree rotation using the MPU-6050.
-        setDirection(STOP);
-    }
+    // if (Sensor[Left][Average] <= 3 || Sensor[Left][Average] > 100 && Sensor[Right][Average] <= 3 || Sensor[Right][Average] > 100 && Sensor[Front][Average] <= 3 || Sensor[Front][Average] > 100)
+    //{
+    // Serial.println("Stop");
+    //  This is where I need to implement the 180 degree rotation using the MPU-6050.
+    // setDirection(STOP);
+    //}
 
     // read sensors & print the result to the serial monitor //
 

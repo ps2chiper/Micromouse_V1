@@ -3,21 +3,35 @@
 
 #include <Arduino.h>
 #include "RobotCarPinDefinitionsAndMore.h"
-#include "CarPWMMotorControl.h"
+//#include "CarPWMMotorControl.h"
 #include "SparkFun_SHTC3.h"
-#include "HCSR04.h"
+//#include "HCSR04.h"
 #include <stack>
+#include <PID_v1.h>
+#include <NewPing.h>
 
 class MicroMouse
 {
 public:
+    double Setpoint, Input, Output;
+    double Kp = 1.4 ,Ki = 0, Kd = 0;
+    double aggKp = 4, aggKi = 0.2, aggKd = 1;
+    double consKp = 1, consKi = 0.05, consKd = 0.25;
+
+    PID *myPID = nullptr; //(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+
     static inline SHTC3 mySHTC3;
 
-    static const short MAX_DISTANCE = 200;
-    static inline UltraSonicDistanceSensor sensorArray[3] = {
+    static const short MAX_DISTANCE = 50;
+    /* static inline UltraSonicDistanceSensor sensorArray[3] = {
         UltraSonicDistanceSensor(PIN_TRIGGER_OUT_LEFT, PIN_ECHO_IN_LEFT, MAX_DISTANCE),
-        UltraSonicDistanceSensor(PIN_TRIGGER_OUT_FRONT, PIN_ECHO_IN_FRONT, MAX_DISTANCE),
-        UltraSonicDistanceSensor(PIN_TRIGGER_OUT_RIGHT, PIN_ECHO_IN_RIGHT, MAX_DISTANCE)};
+        UltraSonicDistanceSensor(PIN_TRIGGER_OUT_RIGHT, PIN_ECHO_IN_RIGHT, MAX_DISTANCE),
+        UltraSonicDistanceSensor(PIN_TRIGGER_OUT_FRONT, PIN_ECHO_IN_FRONT, MAX_DISTANCE)};
+ */
+    static inline NewPing sensorArray[3] = {
+        NewPing(PIN_TRIGGER_OUT_LEFT, PIN_ECHO_IN_LEFT, MAX_DISTANCE),
+        NewPing(PIN_TRIGGER_OUT_RIGHT, PIN_ECHO_IN_RIGHT, MAX_DISTANCE),
+        NewPing(PIN_TRIGGER_OUT_FRONT, PIN_ECHO_IN_FRONT, MAX_DISTANCE)};
 
     // Adjust to be your own pins.
     /*
@@ -41,20 +55,28 @@ public:
     #define LEFT 3
     #define RIGHT 4
     */
-   // Set base speed to make the micromouse move. 
-    const int baseSpeed = 120;
+    // Set base speed to make the micromouse move.
+    unsigned long SensorPing[3];
+
+    long errorP, errorI;
+    const int baseSpeed[2] = {140, 140};
+    // const float P = 0.7;
+    // const float D = 0.5;
+    // const float I = 0.4;
     const float P = 0.7;
-    const float D = 0.5;
-    const float I = 0.4;
+    const float D = 1.3;
+    const float I = 0.005;
+    const byte P2 = 2;
+    const byte I2 = 1;
 
     // What is the offset for?
-    const int offset = 5;
+    const int offset = 14;
 
-    const int wall_threshold = 13;
+    const int wall_threshold = 7;
     // int left_threshold = 10 ;
     // int right_threshold = 10 ;
-    const int front_threshold = 7;
-    const unsigned int pingSpeed = 30; // How frequently are we going to send out a ping (in milliseconds). 50ms would be 20 times a second.
+    const int front_threshold = 13;
+    // const unsigned int pingSpeed = 30; // How frequently are we going to send out a ping (in milliseconds). 50ms would be 20 times a second.
 
     // boolean frontwall;
     // boolean leftwall;
@@ -111,8 +133,8 @@ private:
     enum sonarSensor
     {
         Left = 0,
-        Front = 1,
-        Right = 2,
+        Right = 1,
+        Front = 2,
         New = 0,
         Average = 1,
         Old = 2
@@ -122,7 +144,7 @@ private:
     unsigned long pingTimer; // Holds the next ping time.
 
     float Sensor[3][3];
-    float temperatureCentigrade;
+    float temperatureCentigrade, humidity, soundsp, soundcm;
 
     // Move around
     //--------------------------------- control ---------------------------------//
@@ -138,7 +160,7 @@ private:
 
     //----------------------------- wall follow  control -------------------------------//
 
-    void PID(boolean left);
+    void PIDcalculate(boolean left);
     //--------------------------- wall detection --------------------------------//
 
     void walls();
@@ -185,9 +207,9 @@ private:
     coord globalEnd = {0, 0};
 
     // Test this
-    coord desired[4];// = {{X - 1, Y - 1}, {X - 1, Y}, {X, Y - 1}, {X, Y}};
+    coord desired[4]; // = {{X - 1, Y - 1}, {X - 1, Y}, {X, Y - 1}, {X, Y}};
 
-// Define some global constants
+    // Define some global constants
     static constexpr uint8_t X = 16;
     static constexpr uint8_t Y = 16;
 

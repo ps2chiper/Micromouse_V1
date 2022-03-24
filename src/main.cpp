@@ -26,7 +26,7 @@
 #include <STM32FreeRTOS.h>
 #include <FreeRTOSConfig_Default.h>
 #include "RobotCarPinDefinitionsAndMore.h"
-#include "CarPWMMotorControl.hpp"
+//#include "CarPWMMotorControl.hpp"
 #include "SparkFun_SHTC3.h"
 #include "HCSR04.h"
 
@@ -44,6 +44,8 @@
 // MicroMouse Runner;
 
 void Thread1(void *pvParameters);
+void Thread2(void *pvParameters);
+
 void errorDecoder(SHTC3_Status_TypeDef message);
 
 void setup()
@@ -63,29 +65,34 @@ void setup()
   }
 
   // Just to know which program is running on my Arduino
-  Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_PWMMOTORCONTROL));
+  /*   Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_PWMMOTORCONTROL));
 
-  RobotCarPWMMotorControl.init(RIGHT_MOTOR_FORWARD_PIN, RIGHT_MOTOR_BACKWARD_PIN, RIGHT_MOTOR_PWM_PIN, RIGHT_MOTOR_INTERRUPT, LEFT_MOTOR_FORWARD_PIN,
-                               LEFT_MOTOR_BACKWARD_PIN, LEFT_MOTOR_PWM_PIN, LEFT_MOTOR_INTERRUPT);
-  // RobotCarPWMMotorControl.leftCarMotor.init(LEFT_MOTOR_FORWARD_PIN, LEFT_MOTOR_BACKWARD_PIN, LEFT_MOTOR_PWM_PIN, LEFT_MOTOR_INTERRUPT);
-  // RobotCarPWMMotorControl.rightCarMotor.init(RIGHT_MOTOR_FORWARD_PIN, RIGHT_MOTOR_BACKWARD_PIN, RIGHT_MOTOR_PWM_PIN, RIGHT_MOTOR_INTERRUPT);
-
-  // RobotCarPWMMotorControl.setDriveSpeedAndSpeedCompensationPWM(DEFAULT_DRIVE_SPEED_PWM, SPEED_PWM_COMPENSATION_RIGHT); // Set compensation
-  // RobotCarPWMMotorControl.setFactorDegreeToMillimeter(FACTOR_DEGREE_TO_MILLIMETER_2WD_CAR_DEFAULT);
+    RobotCarPWMMotorControl.init(RIGHT_MOTOR_FORWARD_PIN, RIGHT_MOTOR_BACKWARD_PIN, RIGHT_MOTOR_PWM_PIN, RIGHT_MOTOR_INTERRUPT, LEFT_MOTOR_FORWARD_PIN,
+                                 LEFT_MOTOR_BACKWARD_PIN, LEFT_MOTOR_PWM_PIN, LEFT_MOTOR_INTERRUPT);
+   */
+  // RobotCarPWMMotorControl.updateMotors(); // Set compensation
+  //  RobotCarPWMMotorControl.setFactorDegreeToMillimeter(FACTOR_DEGREE_TO_MILLIMETER_2WD_CAR_DEFAULT);
+  //  RobotCarPWMMotorControl.setDefaultsForFixedDistanceDriving();
 
   // Print info
-  PWMDcMotor::printSettings(&Serial);
+  // PWMDcMotor::printSettings(&Serial);
   // RobotCarPWMMotorControl.rightCarMotor.wheelGoDistanceTicks(100L, 255, DIRECTION_FORWARD);
   // RobotCarPWMMotorControl.leftCarMotor.wheelGoDistanceTicks(100L, 255, DIRECTION_FORWARD);
   // delay(1000);
-  //RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(255, DIRECTION_FORWARD);
-  // RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(255, DIRECTION_FORWARD);
+
   // RobotCarPWMMotorControl.leftCarMotor.updateDriveSpeedPWM(255);
   // RobotCarPWMMotorControl.leftCarMotor.start(DIRECTION_FORWARD);
   // RobotCarPWMMotorControl.leftCarMotor.wheelGoDistanceTicks(100L, 255, DIRECTION_FORWARD);
   // delay(1000);
-
-  // RobotCarPWMMotorControl.rotate(-90, TURN_IN_PLACE);
+  //-RobotCarPWMMotorControl.setDriveSpeedPWM(120);
+  // RobotCarPWMMotorControl.rotate(-180, TURN_IN_PLACE);
+  // RobotCarPWMMotorControl.goDistanceMillimeter(400, TURN_FORWARD);
+  // delay(400);
+  // RobotCarPWMMotorControl.rotate(-180, TURN_IN_PLACE);
+  // delay(400);
+  // RobotCarPWMMotorControl.goDistanceMillimeter(400, TURN_FORWARD);
+  // delay(400);
+  // RobotCarPWMMotorControl.stop();
 
   Runner.init();
   Serial.print("TempC is: ");
@@ -96,20 +103,31 @@ void setup()
       ,
       128 // This stack size can be checked & adjusted by reading the Stack Highwater
       ,
-      NULL, 2 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+      NULL, 0 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
       ,
       NULL);
+  /*   xTaskCreate(
+        Thread2, (const portCHAR *)"Read Sensors" // A name just for humans
+        ,
+        128 // This stack size can be checked & adjusted by reading the Stack Highwater
+        ,
+        NULL, 2 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+        ,
+        NULL); */
 
   // start scheduler
-  vTaskStartScheduler();
-  Serial.println("Insufficient RAM");
-  while (1)
-    ;
+  // vTaskStartScheduler();
+  // Serial.println("Insufficient RAM");
+  // while (1)
+  {
+  }
+
 }
 
 void loop()
 {
-  // Not used
+
+  Runner.runInLoop();
 }
 
 void Thread1(void *pvParameters __attribute__((unused))) // This is a Task.
@@ -124,6 +142,12 @@ void Thread1(void *pvParameters __attribute__((unused))) // This is a Task.
         Serial.print("Right Sensor: ");
         Serial.println(Runner.rightSensor); */
     // vTaskDelay(1); // use instead of delay
-    Runner.runInLoop();
+  }
+}
+void Thread2(void *pvParameters __attribute__((unused))) // This is a Task.
+{
+  while (true)
+  {
+    // Runner.ReadSensors();
   }
 }
