@@ -31,12 +31,10 @@ void MicroMouse::init()
     pinMode(LEFT_MOTOR_BACKWARD_PIN, OUTPUT);
     pinMode(RIGHT_MOTOR_FORWARD_PIN, OUTPUT);
     pinMode(RIGHT_MOTOR_BACKWARD_PIN, OUTPUT);
-    myPID = new PID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
-    //Input = sensorArray[Left].ping_median();
+    // Input = sensorArray[Left].ping_median();
     Setpoint = 7;
-    myPID->SetMode(AUTOMATIC);
-    myPID->SetOutputLimits(-4, 4);
-
+    myPID.SetMode(myPID.Control::automatic);
+    myPID.SetOutputLimits(-15, 15);
 }
 
 void MicroMouse::setTempC(float temp)
@@ -144,12 +142,12 @@ void MicroMouse::ReadSensors()
     {
         // This may possibly work. I just don't like that the robot is in motion while it is performing these calculations.
         Sensor[i][Old] = Sensor[i][Average] = (sensorArray[i].ping_cm(MAX_DISTANCE) + Sensor[i][Old]) / 2.0;
-        //SensorPing[i] = sensorArray[i].ping_median(5);
-        //Sensor[i][Average] = (SensorPing[i] / 2.0) * soundcm - 2.0;
-        //delay(12);
-        // Sensor[i][Average] = sensorArray[i].ping_medianCM(10, temperatureCentigrade);
-        //  delay(30);
-        //   Sensor[i][New] = sensorArray[i].measureDistanceCm(temperatureCentigrade);
+        // SensorPing[i] = sensorArray[i].ping_median(5);
+        // Sensor[i][Average] = (SensorPing[i] / 2.0) * soundcm - 2.0;
+        // delay(12);
+        //  Sensor[i][Average] = sensorArray[i].ping_medianCM(10, temperatureCentigrade);
+        //   delay(30);
+        //    Sensor[i][New] = sensorArray[i].measureDistanceCm(temperatureCentigrade);
     }
     // for (uint8_t i = 0; i < 3; i++)
     /*     {
@@ -249,31 +247,31 @@ void MicroMouse::PIDcalculate(boolean left)
             // totalError = P * errorP + D * errorD + I * errorI;
 
             // oldErrorP = errorP; */
-    while (Sensor[Left][Average] < 3.0 || Sensor[Left][Average] > 10)
+    while (Sensor[Left][Average] < 3 || Sensor[Left][Average] > 15)
     {
         SensorPing[Left] = sensorArray[Left].ping_median(5);
         Sensor[Left][Average] = (SensorPing[Left] / 2.0) * soundcm;
         delay(12);
         setDirection(STOP);
     }
-    //while(Sensor[Left][Average] > 10)
+    // while(Sensor[Left][Average] > 10)
     {
-        //Sensor[Left][Average] = 0.0;
+        // Sensor[Left][Average] = 0.0;
     }
-    Input = Sensor[Left][Average];
+    Input = Sensor[Left][Average]- 2;
 
-    //double gap = abs(Setpoint - Input); // distance away from setpoint
-/*     if (gap < 1)
+    double gap = abs(Setpoint - Input); // distance away from setpoint
+    if (gap < 3.5)
     { // we're close to setpoint, use conservative tuning parameters
-        myPID->SetTunings(consKp, consKi, consKd);
+        myPID.SetTunings(consKp, consKi, consKd);
     }
     else
     {
         // we're far from setpoint, use aggressive tuning parameters
-        myPID->SetTunings(aggKp, aggKi, aggKd);
-    } */
-    myPID->Compute();
-    RMS = baseSpeed[Right];// - Output;
+        myPID.SetTunings(aggKp, aggKi, aggKd);
+    }
+    myPID.Compute();
+    RMS = baseSpeed[Right] - Output;
     LMS = baseSpeed[Left] + Output;
     Serial.print("Output: ");
     Serial.println(Output);
@@ -307,15 +305,15 @@ void MicroMouse::PIDcalculate(boolean left)
     {
         if (Sensor[Left][Average] <= 4)
         {
-            //digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel reverse
-            //digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
-            //digitalWrite(RIGHT_MOTOR_FORWARD_PIN, LOW); // Right wheel forward
-            //digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH);
+            // digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel reverse
+            // digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
+            // digitalWrite(RIGHT_MOTOR_FORWARD_PIN, LOW); // Right wheel forward
+            // digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH);
             setDirection(RIGHT);
             delay(10);
             // setDirection(STOP);
-            //delay(100);
-            //Sensor[Left][Old] = Sensor[Left][Average] = (sensorArray[Left].measureDistanceCm(temperatureCentigrade) + Sensor[Left][Old]) / 2;
+            // delay(100);
+            // Sensor[Left][Old] = Sensor[Left][Average] = (sensorArray[Left].measureDistanceCm(temperatureCentigrade) + Sensor[Left][Old]) / 2;
         }
         // else if ((Sensor[Left][Average] >= 10 || Sensor[Left][Average] < 2) && false)
         // {

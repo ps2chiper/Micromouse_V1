@@ -7,18 +7,32 @@
 #include "SparkFun_SHTC3.h"
 //#include "HCSR04.h"
 #include <stack>
-#include <PID_v1.h>
+//#include <PID_v1.h>
 #include <NewPing.h>
+//#include <pidautotuner.h>
+#include "QuickPID.h"
+//#include "Ticker.h" // https://github.com/sstaub/Ticker
 
 class MicroMouse
 {
 public:
-    double Setpoint, Input, Output;
-    double Kp = 1.4 ,Ki = 0, Kd = 0;
+    long microseconds;
+
+    const uint32_t sampleTimeUs = 100000; // 100ms
+    static inline boolean computeNow; 
+
+    float Setpoint, Input, Output;
+    //double Kp = 1.4, Ki = 0, Kd = 0;
     double aggKp = 4, aggKi = 0.2, aggKd = 1;
     double consKp = 1, consKi = 0.05, consKd = 0.25;
+    //float Kp = 2, Ki = 5, Kd = 1;
 
-    PID *myPID = nullptr; //(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+    QuickPID myPID = QuickPID(&Input, &Output, &Setpoint);
+    // PID myPID = PID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+    //PIDAutotuner tuner = PIDAutotuner();
+
+    // Turn the output off here.
+    // doSomethingToSetOutput(0);
 
     static inline SHTC3 mySHTC3;
 
@@ -59,15 +73,11 @@ public:
     unsigned long SensorPing[3];
 
     long errorP, errorI;
-    const int baseSpeed[2] = {140, 140};
+    const int baseSpeed[2] = {120, 120};
     // const float P = 0.7;
     // const float D = 0.5;
     // const float I = 0.4;
-    const float P = 0.7;
-    const float D = 1.3;
-    const float I = 0.005;
-    const byte P2 = 2;
-    const byte I2 = 1;
+ 
 
     // What is the offset for?
     const int offset = 14;
