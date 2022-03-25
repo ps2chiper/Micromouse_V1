@@ -32,11 +32,30 @@ void MicroMouse::init()
     pinMode(RIGHT_MOTOR_FORWARD_PIN, OUTPUT);
     pinMode(RIGHT_MOTOR_BACKWARD_PIN, OUTPUT);
     // Input = sensorArray[Left].ping_median();
-    Setpoint = 7;
+    Setpoint = 4;
     myPID.SetMode(myPID.Control::automatic);
-    myPID.SetOutputLimits(-15, 15);
+/*     pinMode(LEFT_MOTOR_INTERRUPT, INPUT_PULLUP);
+    pinMode(RIGHT_MOTOR_INTERRUPT, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(LEFT_MOTOR_INTERRUPT), ISR0, RISING);
+    attachInterrupt(digitalPinToInterrupt(RIGHT_MOTOR_INTERRUPT), ISR1, RISING);
+    ISR0_Count = 0;
+    ISR1_Count = 0; */
 }
 
+/* void MicroMouse::ISR0()
+{
+    Serial.print("ISR0: ");
+    Serial.print(ISR0_Count);
+    MicroMouse::ISR0_Count++;
+}
+
+void MicroMouse::ISR1()
+{
+        Serial.print("ISR1: ");
+    Serial.print(ISR1_Count);
+    MicroMouse::ISR1_Count++;
+}
+ */
 void MicroMouse::setTempC(float temp)
 {
     temperatureCentigrade = temp;
@@ -247,27 +266,58 @@ void MicroMouse::PIDcalculate(boolean left)
             // totalError = P * errorP + D * errorD + I * errorI;
 
             // oldErrorP = errorP; */
-    while (Sensor[Left][Average] < 3 || Sensor[Left][Average] > 15)
+    while (Sensor[Left][Average] < 3 || Sensor[Left][Average] > 20)
     {
         SensorPing[Left] = sensorArray[Left].ping_median(5);
         Sensor[Left][Average] = (SensorPing[Left] / 2.0) * soundcm;
         delay(12);
         setDirection(STOP);
+        long count0 = RobotCarPWMMotorControl.leftCarMotor.EncoderCount, count1 = RobotCarPWMMotorControl.rightCarMotor.EncoderCount;
+        if (Sensor[Left][Average] < 3)
+        {
+            analogWrite(RIGHT_MOTOR_PWM_PIN, 100);
+            analogWrite(LEFT_MOTOR_PWM_PIN, 100);
+            do
+            {
+                digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel forward
+                digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
+                Serial.println("Tick: ");
+                Serial.println(RobotCarPWMMotorControl.leftCarMotor.EncoderCount - count0);
+            } while (RobotCarPWMMotorControl.leftCarMotor.EncoderCount - count0 < 1);
+            // digitalWrite(RIGHT_MOTOR_FORWARD_PIN, LOW); // Right wheel reverse
+            // digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH);
+        }
     }
     // while(Sensor[Left][Average] > 10)
     {
         // Sensor[Left][Average] = 0.0;
     }
-    Input = Sensor[Left][Average]- 2;
+    // Create my own ramp using pwm offsets and constants.
+
+    Input = Sensor[Left][Average] < 3.5 ? -10 : Sensor[Left][Average];
 
     double gap = abs(Setpoint - Input); // distance away from setpoint
-    if (gap < 3.5)
+    Serial.print("Gap: ");
+    Serial.println(gap);
+    if (gap < 1)
     { // we're close to setpoint, use conservative tuning parameters
+        myPID.SetOutputLimits(-4, 4);
         myPID.SetTunings(consKp, consKi, consKd);
+    }
+    else if (gap < 2)
+    { // we're close to setpoint, use conservative tuning parameters
+        myPID.SetOutputLimits(-8, 8);
+        myPID.SetTunings(consKp, consKi, consKd);
+    }
+    else if (gap < 7)
+    { // we're close to setpoint, use conservative tuning parameters
+        myPID.SetOutputLimits(-12, 12);
+        myPID.SetTunings(aggKp, aggKi, aggKd);
     }
     else
     {
         // we're far from setpoint, use aggressive tuning parameters
+        myPID.SetOutputLimits(-50, 50);
         myPID.SetTunings(aggKp, aggKi, aggKd);
     }
     myPID.Compute();

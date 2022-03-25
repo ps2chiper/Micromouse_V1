@@ -26,7 +26,7 @@
 #include <STM32FreeRTOS.h>
 #include <FreeRTOSConfig_Default.h>
 #include "RobotCarPinDefinitionsAndMore.h"
-//#include "CarPWMMotorControl.hpp"
+#include "CarPWMMotorControl.hpp"
 #include "SparkFun_SHTC3.h"
 #include "HCSR04.h"
 

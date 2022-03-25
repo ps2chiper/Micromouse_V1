@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include "RobotCarPinDefinitionsAndMore.h"
-//#include "CarPWMMotorControl.h"
+#include "CarPWMMotorControl.h"
 #include "SparkFun_SHTC3.h"
 //#include "HCSR04.h"
 #include <stack>
@@ -16,20 +16,25 @@
 class MicroMouse
 {
 public:
+/*     static void ISR0();
+    volatile static inline long ISR0_Count;
+    static void ISR1();
+    volatile static inline long ISR1_Count; */
+
     long microseconds;
 
     const uint32_t sampleTimeUs = 100000; // 100ms
-    static inline boolean computeNow; 
+    static inline boolean computeNow;
 
     float Setpoint, Input, Output;
-    //double Kp = 1.4, Ki = 0, Kd = 0;
+    // double Kp = 1.4, Ki = 0, Kd = 0;
     double aggKp = 4, aggKi = 0.2, aggKd = 1;
     double consKp = 1, consKi = 0.05, consKd = 0.25;
-    //float Kp = 2, Ki = 5, Kd = 1;
+    // float Kp = 2, Ki = 5, Kd = 1;
 
     QuickPID myPID = QuickPID(&Input, &Output, &Setpoint);
     // PID myPID = PID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
-    //PIDAutotuner tuner = PIDAutotuner();
+    // PIDAutotuner tuner = PIDAutotuner();
 
     // Turn the output off here.
     // doSomethingToSetOutput(0);
@@ -73,11 +78,10 @@ public:
     unsigned long SensorPing[3];
 
     long errorP, errorI;
-    const int baseSpeed[2] = {120, 120};
+    const int baseSpeed[2] = {130, 130};
     // const float P = 0.7;
     // const float D = 0.5;
     // const float I = 0.4;
- 
 
     // What is the offset for?
     const int offset = 14;
