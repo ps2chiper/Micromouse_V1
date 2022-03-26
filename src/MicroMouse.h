@@ -78,7 +78,7 @@ public:
     unsigned long SensorPing[3];
 
     long errorP, errorI;
-    const int baseSpeed[2] = {130, 130};
+    const int baseSpeed[2] = {140, 120};
     // const float P = 0.7;
     // const float D = 0.5;
     // const float I = 0.4;

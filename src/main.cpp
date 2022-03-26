@@ -65,17 +65,18 @@ void setup()
   }
 
   // Just to know which program is running on my Arduino
-  /*   Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_PWMMOTORCONTROL));
+  Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_PWMMOTORCONTROL));
 
-    RobotCarPWMMotorControl.init(RIGHT_MOTOR_FORWARD_PIN, RIGHT_MOTOR_BACKWARD_PIN, RIGHT_MOTOR_PWM_PIN, RIGHT_MOTOR_INTERRUPT, LEFT_MOTOR_FORWARD_PIN,
-                                 LEFT_MOTOR_BACKWARD_PIN, LEFT_MOTOR_PWM_PIN, LEFT_MOTOR_INTERRUPT);
-   */
-  // RobotCarPWMMotorControl.updateMotors(); // Set compensation
-  //  RobotCarPWMMotorControl.setFactorDegreeToMillimeter(FACTOR_DEGREE_TO_MILLIMETER_2WD_CAR_DEFAULT);
-  //  RobotCarPWMMotorControl.setDefaultsForFixedDistanceDriving();
+  RobotCarPWMMotorControl.init(RIGHT_MOTOR_FORWARD_PIN, RIGHT_MOTOR_BACKWARD_PIN, RIGHT_MOTOR_PWM_PIN, RIGHT_MOTOR_INTERRUPT, LEFT_MOTOR_FORWARD_PIN,
+                               LEFT_MOTOR_BACKWARD_PIN, LEFT_MOTOR_PWM_PIN, LEFT_MOTOR_INTERRUPT);
+
+  //RobotCarPWMMotorControl.setDriveSpeedPWM(130);
+  //RobotCarPWMMotorControl.updateMotors(); // Set compensation
+  // RobotCarPWMMotorControl.setFactorDegreeToMillimeter(FACTOR_DEGREE_TO_MILLIMETER_2WD_CAR_DEFAULT);
+  // RobotCarPWMMotorControl.setDefaultsForFixedDistanceDriving();
 
   // Print info
-  // PWMDcMotor::printSettings(&Serial);
+  PWMDcMotor::printSettings(&Serial);
   // RobotCarPWMMotorControl.rightCarMotor.wheelGoDistanceTicks(100L, 255, DIRECTION_FORWARD);
   // RobotCarPWMMotorControl.leftCarMotor.wheelGoDistanceTicks(100L, 255, DIRECTION_FORWARD);
   // delay(1000);
@@ -85,14 +86,7 @@ void setup()
   // RobotCarPWMMotorControl.leftCarMotor.wheelGoDistanceTicks(100L, 255, DIRECTION_FORWARD);
   // delay(1000);
   //-RobotCarPWMMotorControl.setDriveSpeedPWM(120);
-  // RobotCarPWMMotorControl.rotate(-180, TURN_IN_PLACE);
-  // RobotCarPWMMotorControl.goDistanceMillimeter(400, TURN_FORWARD);
-  // delay(400);
-  // RobotCarPWMMotorControl.rotate(-180, TURN_IN_PLACE);
-  // delay(400);
-  // RobotCarPWMMotorControl.goDistanceMillimeter(400, TURN_FORWARD);
-  // delay(400);
-  // RobotCarPWMMotorControl.stop();
+  // RobotCarPWMMotorControl.rotate(-90, TURN_IN_PLACE);
 
   Runner.init();
   Serial.print("TempC is: ");
@@ -116,24 +110,24 @@ void setup()
         NULL); */
 
   // start scheduler
-  // vTaskStartScheduler();
-  // Serial.println("Insufficient RAM");
-  // while (1)
+  vTaskStartScheduler();
+  Serial.println("Insufficient RAM");
+  while (1)
   {
   }
-
 }
 
 void loop()
 {
 
-  Runner.runInLoop();
+  // Runner.runInLoop();
 }
 
 void Thread1(void *pvParameters __attribute__((unused))) // This is a Task.
 {
   while (true)
   {
+    // Runner.runInLoop();
     /*     Runner.ReadSensors();
         Serial.print("Left Sensor: ");
         Serial.println(Runner.leftSensor);
@@ -141,7 +135,25 @@ void Thread1(void *pvParameters __attribute__((unused))) // This is a Task.
         Serial.println(Runner.frontSensor);
         Serial.print("Right Sensor: ");
         Serial.println(Runner.rightSensor); */
-    // vTaskDelay(1); // use instead of delay
+    RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(255);
+    RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(255);
+
+
+    RobotCarPWMMotorControl.rightCarMotor.synchronizeMotor(&RobotCarPWMMotorControl.leftCarMotor, 100);
+    //RobotCarPWMMotorControl.goDistanceMillimeter(4000, TURN_FORWARD);
+
+    // delay(400);
+    // RobotCarPWMMotorControl.rotate(-180, TURN_IN_PLACE);
+    // delay(400);
+    // RobotCarPWMMotorControl.goDistanceMillimeter(400, TURN_FORWARD);
+    // delay(400);
+    //Serial.print("Left PWM: ");
+    //Serial.println(RobotCarPWMMotorControl.leftCarMotor.SpeedPWMCompensation);
+
+    //Serial.print("Right PWM: ");
+    //Serial.println(RobotCarPWMMotorControl.rightCarMotor.SpeedPWMCompensation);
+    // RobotCarPWMMotorControl.updateMotors();
+    // vTaskDelay(5000); // use instead of delay
   }
 }
 void Thread2(void *pvParameters __attribute__((unused))) // This is a Task.
