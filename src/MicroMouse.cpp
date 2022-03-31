@@ -5,10 +5,9 @@ MicroMouse Runner;
 MicroMouse::MicroMouse(float temp)
     : first_turn(false), rightWallFollow(false), leftWallFollow(false), temperatureCentigrade(temp)
 {
-    Wire.setSCL(SCL);
-    Wire.setSDA(SDA);
     Wire.setClock(WIRE_SPEED);
-    Wire.begin();
+    Wire.begin(SDA, SCL);
+    delay(100);
 }
 
 MicroMouse::~MicroMouse()
@@ -27,35 +26,22 @@ void MicroMouse::init()
     humidity = MicroMouse::mySHTC3.toPercent();
     soundsp = 331.4 + (0.606 * temperatureCentigrade) + (0.0124 * humidity);
     soundcm = soundsp / 10000.0;
-    // pinMode(LEFT_MOTOR_FORWARD_PIN, OUTPUT);
-    // pinMode(LEFT_MOTOR_BACKWARD_PIN, OUTPUT);
-    // pinMode(RIGHT_MOTOR_FORWARD_PIN, OUTPUT);
-    // pinMode(RIGHT_MOTOR_BACKWARD_PIN, OUTPUT);
-    //  Input = sensorArray[Left].ping_median();
-    Setpoint = 4;
     myPID.SetMode(myPID.Control::automatic);
-    /*     pinMode(LEFT_MOTOR_INTERRUPT, INPUT_PULLUP);
-        pinMode(RIGHT_MOTOR_INTERRUPT, INPUT_PULLUP);
-        attachInterrupt(digitalPinToInterrupt(LEFT_MOTOR_INTERRUPT), ISR0, RISING);
-        attachInterrupt(digitalPinToInterrupt(RIGHT_MOTOR_INTERRUPT), ISR1, RISING);
-        ISR0_Count = 0;
-        ISR1_Count = 0; */
+    myPID.SetOutputLimits(-10, 10);
+    pinMode(SHT_LOX1, OUTPUT);
+    pinMode(SHT_LOX2, OUTPUT);
+    // Serial.println(F("Shutdown pins inited..."));
+    digitalWrite(SHT_LOX1, HIGH);
+    digitalWrite(SHT_LOX2, HIGH);
+    Serial.println(F("Both in reset mode...(pins are low)"));
+    Serial.println(F("Starting..."));
+    setID();
+    lox1.configSensor(Adafruit_VL53L0X::VL53L0X_SENSE_DEFAULT);
+    lox2.configSensor(Adafruit_VL53L0X::VL53L0X_SENSE_DEFAULT);
+    lox1.startRangeContinuous();
+    lox2.startRangeContinuous();
 }
 
-/* void MicroMouse::ISR0()
-{
-    Serial.print("ISR0: ");
-    Serial.print(ISR0_Count);
-    MicroMouse::ISR0_Count++;
-}
-
-void MicroMouse::ISR1()
-{
-        Serial.print("ISR1: ");
-    Serial.print(ISR1_Count);
-    MicroMouse::ISR1_Count++;
-}
- */
 void MicroMouse::setTempC(float temp)
 {
     temperatureCentigrade = temp;
@@ -83,58 +69,32 @@ void MicroMouse::setDirection(int dir)
     Serial.println(dir);
     if (dir == FORWARD)
     {
-        // RobotCarPWMMotorControl.goDistanceMillimeter(100);
-        // delay(400);
         RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(LMS, DIRECTION_FORWARD);
         RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD);
-        // RobotCarPWMMotorControl.leftCarMotor.goDistanceMillimeter();
-        // RobotCarPWMMotorControl.rightCarMotor.goDistanceMillimeter(RMS,DIRECTION_FORWARD);
-
-        // digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel forward
-        // digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
-        // digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel forward
-        // digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW);
         Serial.println("FORWARD");
     }
     else if (dir == LEFT)
     {
         RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(LMS, DIRECTION_BACKWARD);
         RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_FORWARD);
-        RobotCarPWMMotorControl.updateMotors();
-        // digitalWrite(LEFT_MOTOR_FORWARD_PIN, LOW); // Left wheel reverse
-        // digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
-        // digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel forward
-        // digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW);
         Serial.println("LEFT");
     }
     else if (dir == RIGHT)
     {
         RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(LMS, DIRECTION_FORWARD);
         RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD);
-        // digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel forward
-        // digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
-        // digitalWrite(RIGHT_MOTOR_FORWARD_PIN, LOW); // Right wheel reverse
-        // digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH);
         Serial.println("RIGHT");
     }
     else if (dir == STOP)
     {
         RobotCarPWMMotorControl.leftCarMotor.stop(MOTOR_BRAKE);
         RobotCarPWMMotorControl.rightCarMotor.stop(MOTOR_BRAKE);
-        // digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel stop
-        // digitalWrite(LEFT_MOTOR_BACKWARD_PIN, HIGH);
-        // digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel stop
-        // digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, HIGH);
         Serial.println("STOP");
     }
     else if (dir == BACKWARD)
     {
-        /*        RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(LMS, DIRECTION_BACKWARD);
-               RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD); */
-        digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel reverse
-        digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
-        digitalWrite(RIGHT_MOTOR_FORWARD_PIN, HIGH); // Right wheel backward
-        digitalWrite(RIGHT_MOTOR_BACKWARD_PIN, LOW);
+        RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(LMS, DIRECTION_BACKWARD);
+        RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(RMS, DIRECTION_BACKWARD);
         Serial.println("BACKWARD");
     }
 }
@@ -142,172 +102,91 @@ void MicroMouse::setDirection(int dir)
 void MicroMouse::ReadSensors()
 {
 
-    /*     // leftSensor = sonarLeft.ping_median(TestNUM);     //accurate but slow
-        // rightSensor = sonarRight.ping_median(TestNUM);     //accurate but slow
-        // frontSensor = sonarFront.ping_median(TestNUM);     //accurate but slow
-
-        // leftSensor = sonarLeft.convert_cm(leftSensor);
-        // rightSensor = sonarRight.convert_cm(rightSensor);
-        // frontSensor = sonarFront.convert_cm(frontSensor);
-
-        // Sensor[Left][New] = sensorArray[Left].measureDistanceCm(temperatureCentigrade); // ping in cm
-        // Sensor[Right][New] = sensorArray[Front].measureDistanceCm(temperatureCentigrade);
-        // Sensor[Front][New] = sensorArray[Right].measureDistanceCm(temperatureCentigrade); */
-
-    // Prehaps combine this into one for loop if the timing allows.
-    // SensorPing[Left] = sensorArray[Left].ping_median(5, temperatureCentigrade);
-    // SensorPing[Right] = sensorArray[Right].ping_median(5, temperatureCentigrade);
-
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        // This may possibly work. I just don't like that the robot is in motion while it is performing these calculations.
-        //Sensor[i][Old] = Sensor[i][Average] = (sensorArray[i].ping_cm(MAX_DISTANCE) + Sensor[i][Old]) / 2.0;
-        SensorPing[i] = sensorArray[i].ping_median(5);
-        Sensor[i][Average] = (SensorPing[i] / 2.0) * soundcm - 2.0;
-        // delay(12);
-        //  Sensor[i][Average] = sensorArray[i].ping_medianCM(10, temperatureCentigrade);
-        //   delay(30);
-        //    Sensor[i][New] = sensorArray[i].measureDistanceCm(temperatureCentigrade);
-    }
-    // for (uint8_t i = 0; i < 3; i++)
-    /*     {
-            Sensor[i][Old] = Sensor[i][Average] = (Sensor[i][New] + Sensor[i][Old]) / 2;
-            // Sensor[i][Old] = Sensor[i][Average];
-        } */
-
-    // lSensor = sonarLeft.measureDistanceCm(temperatureCentigrade); // ping in cm
-    // rSensor = sonarRight.measureDistanceCm(temperatureCentigrade);
-    // fSensor = sonarFront.measureDistanceCm(temperatureCentigrade);
-
-    // Sensor[Left][Average] = (Sensor[Left][New] + Sensor[Left][Old]) / 2;    // average distance between old & new readings to make the change smoother
-    // Sensor[Right][Average] = (Sensor[Right][New] + Sensor[Right][Old]) / 2; // It will truncate by division, maybe that is needed.
-    // Sensor[Front][Average] = (Sensor[Front][New] + Sensor[Front][Old]) / 2;
-
-    // Sensor[Left][Old] = Sensor[Left][Average]; // save old readings for movment
-    // Sensor[Right][Old] = Sensor[Right][Average];
-    // Sensor[Front][Old] = Sensor[Front][Average];
+    Sensor[Front][Old] = Sensor[Front][Average] = (SonicSensor.ping_cm(MAX_DISTANCE) + Sensor[Front][Old]) / 2.0;
+    Sensor[Left][Average] = lox1.readRange();
+    Sensor[Right][Average] = lox2.readRange();
+    Sensor[Left][Average] = Sensor[Left][Average] > 20 ? Sensor[Left][Average] - 20 : 0;
+    Sensor[Right][Average] = Sensor[Right][Average] > 20 ? Sensor[Right][Average] - 20 : 0;
 }
-
-// void MicroMouse::pid_start()
-// {
-
-//     // ReadSensors()
-
-//     float errorP = Sensor[Left][Average] - Sensor[Right][Average];
-//     float errorD = errorP - oldErrorP;
-//     float errorI = (2.0 / 3.0) * errorI + errorP;
-//     totalError = P * errorP + D * errorD + I * errorI;
-//     oldErrorP = errorP;
-
-//         RMS = baseSpeed + totalError;
-//         LMS = baseSpeed - totalError;
-
-//     //  if(RMS < -255) RMS = -255; if(RMS > 255)RMS = 255 ;
-//     //  if(LMS < -255) LMS = -255;  if(LMS > 255)LMS = 255 ;
-
-//     if (RMS < 0)
-//     {
-
-//         RMS = map(RMS, 0, -255, 0, 255);
-
-//         // analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-//         // analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
-
-//         setDirection(RIGHT);
-//     }
-//     else if (LMS < 0)
-//     {
-//         LMS = map(LMS, 0, -255, 0, 255);
-
-//         // analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-//         // analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
-
-//         setDirection(LEFT);
-//     }
-//     else
-//     {
-
-//         // analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-//         // analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
-
-//         setDirection(FORWARD);
-//     }
-// }
 
 void MicroMouse::PIDcalculate(boolean left)
 {
-    // Rearrange the checks to reduce the lines of code. If first turn is false, subtract zero, else return a positive offset if left is true, and a negative offset if left is false.
-
-    // Serial.print("first_turn: ");
-    // Serial.println(first_turn);
-    // Serial.print("Left: ");
-    // Serial.println(left);
-    // Serial.print("Offset: ");
-    // Serial.println(offset);
-    // long errorP = Sensor[Left][Average] - Sensor[Right][Average]; // - (first_turn ? (left ? offset : -offset) : 0);
-    // errorP = SensorPing[Left] - SensorPing[Right];
-    // Serial.print("errorP: ");
-    // Serial.println(errorP);
-    // float errorD = errorP - oldErrorP;
-    // Serial.print("errorD: ");
-    // Serial.println(errorD);
-    // errorI = (2.0 / 3.0) * errorI + errorP;
-    // Serial.print("errorI: ");
-    // Serial.println(errorI);
-    // totalError = P2 * errorP + /*D * errorD + */ I2 * errorI;
-    // oldErrorP = errorP;
-
-    // if (left == true)
-    //{
-
-    /*         // float errorP = leftSensor - rightSensor - offset;
-            // float errorD = errorP - oldErrorP;
-            // float errorI = (2.0 / 3) * errorI + errorP;
-
-            // totalError = P * errorP + D * errorD + I * errorI;
-
-            // oldErrorP = errorP; */
-    if (Sensor[Left][Average] < 4)
+    // Add variable for wall error.
+    Setpoint = (wall[Left] && wall[Right] ? 0 : 41.5); // Setpoint of 0 if both walls are true or 41.5
+    while (Sensor[Left][Average] < emergency_threshold && !wall[Right] && !wall[Front])
     {
-        SensorPing[Left] = sensorArray[Left].ping_median(5);
-        Sensor[Left][Average] = (SensorPing[Left] / 2.0) * soundcm;
-        //delay(12);
-        //setDirection(STOP);
-        //RobotCarPWMMotorControl.setDriveSpeedPWM(140);
-        //RobotCarPWMMotorControl.updateMotors();
-        //RobotCarPWMMotorControl.rotate(-30, TURN_FORWARD);
-        RobotCarPWMMotorControl.startRotate(-5,TURN_IN_PLACE);
+        Serial.println(F("Emergency Turn!"));
+        setDirection(STOP);
+        // delay(500);
+        ReadSensors();
+        float degrees = atan((Sensor[Left][Average] - (Setpoint + (Setpoint - Sensor[Left][Average]))) / (float)offset) * RAD_TO_DEG;
+        Serial.print(F("Turn Degrees: "));
+        Serial.print(degrees);
+        RobotCarPWMMotorControl.rotate(degrees, TURN_IN_PLACE);
+        // delay(500);
+        ReadSensors();
     }
-    // while(Sensor[Left][Average] > 10)
-    {
-        // Sensor[Left][Average] = 0.0;
-    }
-    // Create my own ramp using pwm offsets and constants.
 
-    Input = Sensor[Left][Average];
+    while (Sensor[Right][Average] < emergency_threshold && !wall[Left] && !wall[Front])
+    {
+        Serial.println(F("Emergency Turn!"));
+        setDirection(STOP);
+        // delay(500);
+        ReadSensors();
+        float degrees = atan((Sensor[Right][Average] + (Setpoint + (Setpoint - Sensor[Right][Average]))) / (float)offset) * RAD_TO_DEG;
+        Serial.print(F("Turn Degrees: "));
+        Serial.print(degrees);
+        RobotCarPWMMotorControl.rotate(degrees, TURN_IN_PLACE);
+        // delay(500);
+        ReadSensors();
+    }
+
+    while ((Sensor[Left][Average] < emergency_threshold || Sensor[Right][Average] < emergency_threshold) && wall[Left] && wall[Right] && !wall[Front])
+    {
+        Serial.println(F("Emergency Turn!"));
+        setDirection(STOP);
+        // delay(500);
+        ReadSensors();
+        float degrees = atan((Sensor[Left][Average] - Sensor[Right][Average]) / (float)offset) * RAD_TO_DEG;
+        Serial.print(F("Turn Degrees: "));
+        Serial.print(degrees);
+        RobotCarPWMMotorControl.rotate(degrees, TURN_IN_PLACE);
+        // delay(500);
+        ReadSensors();
+    }
+
+    // Need to add a go straight using without any walls.
+
+    Setpoint = (wall[Left] && wall[Right] ? 0 : 41.5);
+    Input = (wall[Left] ? Sensor[Left][Average] : 0) - (wall[Right] ? Sensor[Right][Average] : 0);
 
     double gap = abs(Setpoint - Input); // distance away from setpoint
     Serial.print("Gap: ");
     Serial.println(gap);
-    if (gap < 1)
+    if (gap < 15)
     { // we're close to setpoint, use conservative tuning parameters
-        myPID.SetOutputLimits(-4, 4);
+        // myPID.SetOutputLimits(-5, 5);
         myPID.SetTunings(consKp, consKi, consKd);
     }
-    else if (gap < 5)
-    { // we're close to setpoint, use conservative tuning parameters
-        myPID.SetOutputLimits(-6, 6);
-        myPID.SetTunings(consKp, consKi, consKd);
-    }
-    else if (gap < 7)
-    { // we're close to setpoint, use conservative tuning parameters
-        myPID.SetOutputLimits(-12, 12);
-        myPID.SetTunings(aggKp, aggKi, aggKd);
-    }
+    /*     else if (gap < 10)
+        { // we're close to setpoint, use conservative tuning parameters
+            myPID.SetOutputLimits(-15, 15);
+            myPID.SetTunings(consKp, consKi, consKd);
+        }
+        else if (gap < 20)
+        { // we're close to setpoint, use conservative tuning parameters
+            myPID.SetOutputLimits(-30, 30);
+            myPID.SetTunings(consKp, consKi,consKd);
+        }
+        else if (gap < 30)
+        { // we're close to setpoint, use conservative tuning parameters
+            myPID.SetOutputLimits(-50, 50);
+            myPID.SetTunings(aggKp, aggKi, aggKd);
+        } */
     else
     {
         // we're far from setpoint, use aggressive tuning parameters
-        myPID.SetOutputLimits(-25, 25);
+        // myPID.SetOutputLimits(-15, 15);
         myPID.SetTunings(aggKp, aggKi, aggKd);
     }
     myPID.Compute();
@@ -316,34 +195,9 @@ void MicroMouse::PIDcalculate(boolean left)
     Serial.print("Output: ");
     Serial.println(Output);
 
-    /* //  if(RMS < -255) RMS = -255; if(RMS > 255)RMS = 255 ;
-    //  if(LMS < -255) LMS = -255;  if(LMS > 255)LMS = 255 ; */
-
-    // if (RMS < 0)
-    // {
-
-    //     RMS = map(RMS, 0, -255, 0, 255);
-
-    //     analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-    //     analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
-
-    //     setDirection(RIGHT);
-    // }
-    // else if (LMS < 0)
-    // {
-    //     LMS = map(LMS, 0, -255, 0, 255);
-
-    //     analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-    //     analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
-
-    //     setDirection(LEFT);
-    // }
-    // else
-    // analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-    // analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
     if (false)
     {
-        if (Sensor[Left][Average] <= 4)
+        if (Sensor[Left][Average] <= 40)
         {
             // digitalWrite(LEFT_MOTOR_FORWARD_PIN, HIGH); // Left wheel reverse
             // digitalWrite(LEFT_MOTOR_BACKWARD_PIN, LOW);
@@ -373,67 +227,51 @@ void MicroMouse::PIDcalculate(boolean left)
         //     // Sensor[Left][Old] = Sensor[Left][Average] = (sensorArray[Left].measureDistanceCm(temperatureCentigrade) + Sensor[Left][Old]) / 2;
         // }
     }
-    // if (Sensor[Left][Average] > 5 && Sensor[Left][Average] < 10)
+    if (!wall[Front])
     {
 
         setDirection(FORWARD);
         // delay(100);
     }
-    // while (Sensor[Left][Average] < 2)
-    // {
-
-    //     analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-    //     analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
-    //     setDirection(STOP);
-    //     Sensor[Left][Average] = sensorArray[left].ping_medianCM(5, temperatureCentigrade);
-    // }
-
-    //}
-    // /* else
-    // {
-
-    //     /*         // float errorP = leftSensor - rightSensor + offset;
-    //             // float errorD = errorP - oldErrorP;
-    //             // float errorI = (2.0 / 3) * errorI + errorP;
-
-    //             // totalError = P * errorP + D * errorD + I * errorI;
-
-    //             // oldErrorP = errorP;
-
-    //             // RMS = baseSpeed + totalError;
-    //             // LMS = baseSpeed - totalError;
-
-    //             //  if(RMS < -255) RMS = -255; if(RMS > 255)RMS = 255 ;
-    //             //  if(LMS < -255) LMS = -255;  if(LMS > 255)LMS = 255 ; */
-
-    //     if (RMS < 0)
-    //     {
-
-    //         RMS = map(RMS, 0, -255, 0, 255);
-
-    //         // analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-    //         // analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
-
-    //         setDirection(RIGHT);
-    //     }
-    //     else if (LMS < 0)
-    //     {
-    //         LMS = map(LMS, 0, -255, 0, 255);
-
-    //         // analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-    //         // analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
-
-    //         setDirection(LEFT);
-    //     }
-    //     else
-    //     {
-
-    //         // analogWrite(RIGHT_MOTOR_PWM_PIN, RMS);
-    //         // analogWrite(LEFT_MOTOR_PWM_PIN, LMS);
-
-    //         setDirection(FORWARD);
-    //     }
-    // } */
+    else
+    {
+        setDirection(STOP);
+    }
+    // convert to switch 
+    // feed info into the floodfill algorithim to find heading. 
+    // break down into smooth turns. 
+    // left T section
+/*     if (wall[left] && !wall[Front] && !wall[Right])
+    {
+    }
+    // dead end
+    else if (wall[left] && wall[Front] && wall[Right])
+    {
+    }
+    // four way section
+    else if (!wall[left] && !wall[Front] && !wall[Right])
+    {
+    }
+    // right T section
+    else if (!wall[left] && !wall[Front] && wall[Right])
+    {
+    }
+    // right only
+    else if (wall[left] && wall[Front] && !wall[Right])
+    {
+    }
+    // T section
+    else if (!wall[left] && wall[Front] && !wall[Right])
+    {
+    }
+    // target found
+    // else if (!wall[left] && wall[Front] && !wall[Right])
+    {
+    }
+    // left only
+    else if (!wall[left] && wall[Front] && wall[Right])
+    {
+    } */
 }
 
 void MicroMouse::walls()
@@ -441,35 +279,11 @@ void MicroMouse::walls()
 
     // Just assign the boolean result of the test directly to the variable.
     wall[Left] = Sensor[Left][Average] < wall_threshold;
-    /*     if (Sensor[Left][Average] < wall_threshold)
-        {
-            leftwall = true;
-        }
-        else
-        {
-            leftwall = false;
-        } */
-
     wall[Right] = Sensor[Right][Average] < wall_threshold;
-
-    /*     if (Sensor[Right][Average] < wall_threshold)
-        {
-            rightwall = true;
-        }
-        else
-        {
-            rightwall = false;
-        } */
-    wall[Front] = Sensor[Front][Average] < front_threshold;
-
-    /*     if (Sensor[Front][Average] < front_threshold)
-        {
-            frontwall = true;
-        }
-        else
-        {
-            frontwall = false;
-        } */
+    wall[Front] = Sensor[Front][Average] < front_threshold && Sensor[Front][Average] >= 2.0;
+    walls_truth_table= wall[Left] * 100 + wall[Front] * 10 + wall[Right];
+    Serial.print(F("Wall truth table: "));
+    Serial.println(walls_truth_table);
 }
 
 void MicroMouse::turnright()
@@ -477,7 +291,7 @@ void MicroMouse::turnright()
 
     /*     LMS = baseSpeed; */
 
-    RMS = LMS * Sensor[Right][Average] / (Sensor[Right][Average] + 11);
+    //RMS = LMS * Sensor[Right][Average] / (Sensor[Right][Average] + 11);
 }
 
 void MicroMouse::turnleft()
@@ -485,7 +299,7 @@ void MicroMouse::turnleft()
     /*
         RMS = baseSpeed; */
 
-    LMS = RMS * Sensor[Left][Average] / (Sensor[Left][Average] + 11);
+    //LMS = RMS * Sensor[Left][Average] / (Sensor[Left][Average] + 11);
 }
 
 // This is a wall hugging mode.
@@ -583,18 +397,18 @@ void MicroMouse::runInLoop()
 
     Serial.print(" Left : ");
     Serial.print(Sensor[Left][Average]);
-    Serial.print(" cm ");
+    Serial.print(" mm ");
     Serial.print(" Right : ");
     Serial.print(Sensor[Right][Average]);
-    Serial.print(" cm ");
+    Serial.print(" mm ");
     Serial.print(" Front : ");
     Serial.print(Sensor[Front][Average]);
     Serial.println(" cm ");
 
     // measure error & print the result to the serial monitor
 
-    Serial.print("error=");
-    Serial.println(totalError);
+    //Serial.print("error=");
+    //Serial.println(totalError);
 }
 
 void MicroMouse::errorDecoder(SHTC3_Status_TypeDef message) // The errorDecoder function prints "SHTC3_Status_TypeDef" resultsin a human-friendly way
@@ -1227,3 +1041,73 @@ void loop()
     executeInstruction(instructions.pop());
   }
   */
+
+void MicroMouse::setID()
+{
+    // all reset
+    digitalWrite(SHT_LOX1, LOW);
+    digitalWrite(SHT_LOX2, LOW);
+    delay(10);
+    // all unreset
+    digitalWrite(SHT_LOX1, HIGH);
+    digitalWrite(SHT_LOX2, HIGH);
+    delay(10);
+
+    // activating LOX1 and resetting LOX2
+    digitalWrite(SHT_LOX1, HIGH);
+    digitalWrite(SHT_LOX2, LOW);
+
+    // initing LOX1
+    if (!lox1.begin(LOX1_ADDRESS))
+    {
+        Serial.println(F("Failed to boot first VL53L0X"));
+        while (1)
+            ;
+    }
+    delay(10);
+
+    // activating LOX2
+    digitalWrite(SHT_LOX2, HIGH);
+    delay(10);
+
+    // initing LOX2
+    if (!lox2.begin(LOX2_ADDRESS))
+    {
+        Serial.println(F("Failed to boot second VL53L0X"));
+        while (1)
+            ;
+    }
+}
+
+/* void MicroMouse::read_dual_sensors()
+{
+
+    lox1.rangingTest(&measure1, false); // pass in 'true' to get debug data printout!
+    lox2.rangingTest(&measure2, false); // pass in 'true' to get debug data printout!
+
+    // print sensor one reading
+    Serial.print(F("1: "));
+    if (measure1.RangeStatus != 4)
+    { // if not out of range
+        Serial.print(measure1.RangeMilliMeter);
+    }
+    else
+    {
+        Serial.print(F("Out of range"));
+    }
+
+    Serial.print(F(" "));
+
+    // print sensor two reading
+    Serial.print(F("2: "));
+    if (measure2.RangeStatus != 4)
+    {
+        Serial.print(measure2.RangeMilliMeter);
+    }
+    else
+    {
+        Serial.print(F("Out of range"));
+    }
+
+    Serial.println();
+} */

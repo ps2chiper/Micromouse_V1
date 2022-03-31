@@ -5,52 +5,52 @@
 #include "RobotCarPinDefinitionsAndMore.h"
 #include "CarPWMMotorControl.h"
 #include "SparkFun_SHTC3.h"
-//#include "HCSR04.h"
 #include <stack>
-//#include <PID_v1.h>
 #include <NewPing.h>
-//#include <pidautotuner.h>
 #include "QuickPID.h"
-//#include "Ticker.h" // https://github.com/sstaub/Ticker
+#include "Adafruit_VL53L0X.h"
+
+/*
+    Reset all sensors by setting all of their XSHUT pins low for delay(10), then set all XSHUT high to bring out of reset
+    Keep sensor #1 awake by keeping XSHUT pin high
+    Put all other sensors into shutdown by pulling XSHUT pins low
+    Initialize sensor #1 with lox.begin(new_i2c_address) Pick any number but 0x29 and it must be under 0x7F. Going with 0x30 to 0x3F is probably OK.
+    Keep sensor #1 awake, and now bring sensor #2 out of reset by setting its XSHUT pin high.
+    Initialize sensor #2 with lox.begin(new_i2c_address) Pick any number but 0x29 and whatever you set the first sensor to
+ */
+
+// address we will assign if dual sensor is present
+#define LOX1_ADDRESS 0x30
+#define LOX2_ADDRESS 0x31
+
+// set the pins to shutdown
+#define SHT_LOX1 PB3
+#define SHT_LOX2 PA15
 
 class MicroMouse
 {
 public:
-/*     static void ISR0();
-    volatile static inline long ISR0_Count;
-    static void ISR1();
-    volatile static inline long ISR1_Count; */
-
-    long microseconds;
-
-    const uint32_t sampleTimeUs = 100000; // 100ms
-    static inline boolean computeNow;
-
+    // Make sure to addjust some of these to prive. 
     float Setpoint, Input, Output;
     // double Kp = 1.4, Ki = 0, Kd = 0;
-    double aggKp = 4, aggKi = 0.2, aggKd = 1;
-    double consKp = 1, consKi = 0.05, consKd = 0.25;
+    const double aggKp = 4, aggKi = 0.2, aggKd = 1;
+    const double consKp = 1, consKi = 0.05, consKd = 0.25;
     // float Kp = 2, Ki = 5, Kd = 1;
 
     QuickPID myPID = QuickPID(&Input, &Output, &Setpoint);
-    // PID myPID = PID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
-    // PIDAutotuner tuner = PIDAutotuner();
 
-    // Turn the output off here.
-    // doSomethingToSetOutput(0);
+    // objects for the vl53l0x
+    static inline Adafruit_VL53L0X lox1 = Adafruit_VL53L0X();
+    static inline Adafruit_VL53L0X lox2 = Adafruit_VL53L0X();
+
+    // this holds the measurement
+    static inline VL53L0X_RangingMeasurementData_t measure1;
+    static inline VL53L0X_RangingMeasurementData_t measure2;
 
     static inline SHTC3 mySHTC3;
 
     static const short MAX_DISTANCE = 50;
-    /* static inline UltraSonicDistanceSensor sensorArray[3] = {
-        UltraSonicDistanceSensor(PIN_TRIGGER_OUT_LEFT, PIN_ECHO_IN_LEFT, MAX_DISTANCE),
-        UltraSonicDistanceSensor(PIN_TRIGGER_OUT_RIGHT, PIN_ECHO_IN_RIGHT, MAX_DISTANCE),
-        UltraSonicDistanceSensor(PIN_TRIGGER_OUT_FRONT, PIN_ECHO_IN_FRONT, MAX_DISTANCE)};
- */
-    static inline NewPing sensorArray[3] = {
-        NewPing(PIN_TRIGGER_OUT_LEFT, PIN_ECHO_IN_LEFT, MAX_DISTANCE),
-        NewPing(PIN_TRIGGER_OUT_RIGHT, PIN_ECHO_IN_RIGHT, MAX_DISTANCE),
-        NewPing(PIN_TRIGGER_OUT_FRONT, PIN_ECHO_IN_FRONT, MAX_DISTANCE)};
+    static inline NewPing SonicSensor = NewPing(PIN_TRIGGER_OUT_FRONT, PIN_ECHO_IN_FRONT, MAX_DISTANCE);
 
     // Adjust to be your own pins.
     /*
@@ -77,20 +77,21 @@ public:
     // Set base speed to make the micromouse move.
     unsigned long SensorPing[3];
 
-    long errorP, errorI;
-    const int baseSpeed[2] = {140, 120};
+    const int baseSpeed[2] = {100, 100};
     // const float P = 0.7;
     // const float D = 0.5;
     // const float I = 0.4;
 
-    // What is the offset for?
-    const int offset = 14;
+    // Offest is the distance between the sensors. 
+    const int offset = 152;
 
-    const int wall_threshold = 7;
+    // Ememergency turn threshold
+    const int emergency_threshold = 30;
+
+    const int wall_threshold = 100; // MM for Time of Flight Sensors. 
     // int left_threshold = 10 ;
     // int right_threshold = 10 ;
-    const int front_threshold = 13;
-    // const unsigned int pingSpeed = 30; // How frequently are we going to send out a ping (in milliseconds). 50ms would be 20 times a second.
+    const int front_threshold = 5; // CM for UltraSonic Sensors. 
 
     // boolean frontwall;
     // boolean leftwall;
@@ -126,15 +127,17 @@ public:
     void runInLoop();
 
     void setTempC(float temp);
+    void read_dual_sensors();
 
 private:
+    void setID();
     int dir;
-    boolean wall[3];
+    byte walls_truth_table;
+    boolean wall[4];
     boolean first_turn;
     boolean rightWallFollow;
     boolean leftWallFollow;
-    float oldErrorP;
-    float totalError;
+
     enum direction
     {
         STOP,

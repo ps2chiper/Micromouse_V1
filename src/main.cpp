@@ -1,34 +1,6 @@
-/*
- *  Square.cpp
- *  Example for driving a 50 cm square using CarPWMMotorControl class
- *
- *  Copyright (C) 2020-2021  Armin Joachimsmeyer
- *  armin.joachimsmeyer@gmail.com
- *
- *  This file is part of Arduino-RobotCar https://github.com/ArminJo/PWMMotorControl.
- *
- *  PWMMotorControl is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
-
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.html>.
- *
- */
-
 #include <Arduino.h>
-#include <STM32FreeRTOS.h>
-#include <FreeRTOSConfig_Default.h>
 #include "RobotCarPinDefinitionsAndMore.h"
 #include "CarPWMMotorControl.hpp"
-#include "SparkFun_SHTC3.h"
-#include "HCSR04.h"
 
 #include "MicroMouse.h"
 
@@ -43,13 +15,11 @@
 
 // MicroMouse Runner;
 
-void Thread1(void *pvParameters);
-void Thread2(void *pvParameters);
-
 void errorDecoder(SHTC3_Status_TypeDef message);
 
 void setup()
 {
+  
   // initialize the digital pin as an output.
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
@@ -70,96 +40,21 @@ void setup()
   RobotCarPWMMotorControl.init(RIGHT_MOTOR_FORWARD_PIN, RIGHT_MOTOR_BACKWARD_PIN, RIGHT_MOTOR_PWM_PIN, RIGHT_MOTOR_INTERRUPT, LEFT_MOTOR_FORWARD_PIN,
                                LEFT_MOTOR_BACKWARD_PIN, LEFT_MOTOR_PWM_PIN, LEFT_MOTOR_INTERRUPT);
 
-  //RobotCarPWMMotorControl.setDriveSpeedPWM(130);
-  //RobotCarPWMMotorControl.updateMotors(); // Set compensation
-  // RobotCarPWMMotorControl.setFactorDegreeToMillimeter(FACTOR_DEGREE_TO_MILLIMETER_2WD_CAR_DEFAULT);
-  // RobotCarPWMMotorControl.setDefaultsForFixedDistanceDriving();
+  RobotCarPWMMotorControl.setDriveSpeedPWM(120);
 
   // Print info
   PWMDcMotor::printSettings(&Serial);
-  // RobotCarPWMMotorControl.rightCarMotor.wheelGoDistanceTicks(100L, 255, DIRECTION_FORWARD);
-  // RobotCarPWMMotorControl.leftCarMotor.wheelGoDistanceTicks(100L, 255, DIRECTION_FORWARD);
-  // delay(1000);
-
-  // RobotCarPWMMotorControl.leftCarMotor.updateDriveSpeedPWM(255);
-  // RobotCarPWMMotorControl.leftCarMotor.start(DIRECTION_FORWARD);
-  // RobotCarPWMMotorControl.leftCarMotor.wheelGoDistanceTicks(100L, 255, DIRECTION_FORWARD);
-  // delay(1000);
-  //-RobotCarPWMMotorControl.setDriveSpeedPWM(120);
-  // RobotCarPWMMotorControl.rotate(-90, TURN_IN_PLACE);
 
   Runner.init();
   Serial.print("TempC is: ");
   Serial.println(Runner.getTempC());
 
-  xTaskCreate(
-      Thread1, (const portCHAR *)"Main Thread" // A name just for humans
-      ,
-      128 // This stack size can be checked & adjusted by reading the Stack Highwater
-      ,
-      NULL, 0 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-      ,
-      NULL);
-  /*   xTaskCreate(
-        Thread2, (const portCHAR *)"Read Sensors" // A name just for humans
-        ,
-        128 // This stack size can be checked & adjusted by reading the Stack Highwater
-        ,
-        NULL, 2 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-        ,
-        NULL); */
 
-  // start scheduler
-  vTaskStartScheduler();
-  Serial.println("Insufficient RAM");
-  while (1)
-  {
-  }
 }
 
 void loop()
 {
 
-  // Runner.runInLoop();
+  Runner.runInLoop();
 }
 
-void Thread1(void *pvParameters __attribute__((unused))) // This is a Task.
-{
-  while (true)
-  {
-    // Runner.runInLoop();
-    /*     Runner.ReadSensors();
-        Serial.print("Left Sensor: ");
-        Serial.println(Runner.leftSensor);
-        Serial.print("Front Sensor: ");
-        Serial.println(Runner.frontSensor);
-        Serial.print("Right Sensor: ");
-        Serial.println(Runner.rightSensor); */
-    RobotCarPWMMotorControl.leftCarMotor.setSpeedPWM(255);
-    RobotCarPWMMotorControl.rightCarMotor.setSpeedPWM(255);
-
-
-    RobotCarPWMMotorControl.rightCarMotor.synchronizeMotor(&RobotCarPWMMotorControl.leftCarMotor, 100);
-    //RobotCarPWMMotorControl.goDistanceMillimeter(4000, TURN_FORWARD);
-
-    // delay(400);
-    // RobotCarPWMMotorControl.rotate(-180, TURN_IN_PLACE);
-    // delay(400);
-    // RobotCarPWMMotorControl.goDistanceMillimeter(400, TURN_FORWARD);
-    // delay(400);
-    //Serial.print("Left PWM: ");
-    //Serial.println(RobotCarPWMMotorControl.leftCarMotor.SpeedPWMCompensation);
-
-    //Serial.print("Right PWM: ");
-    //Serial.println(RobotCarPWMMotorControl.rightCarMotor.SpeedPWMCompensation);
-    // RobotCarPWMMotorControl.updateMotors();
-    // vTaskDelay(5000); // use instead of delay
-  }
-}
-void Thread2(void *pvParameters __attribute__((unused))) // This is a Task.
-{
-  while (true)
-  {
-    // Runner.ReadSensors();
-  }
-}

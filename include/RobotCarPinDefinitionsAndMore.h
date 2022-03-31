@@ -98,8 +98,8 @@
 #define LEFT_MOTOR_BACKWARD_PIN PA3 // IN3
 #define LEFT_MOTOR_PWM_PIN PA1      // ENB - Must be PWM capable
 
-#define RIGHT_MOTOR_FORWARD_PIN PA4  // IN1
-#define RIGHT_MOTOR_BACKWARD_PIN PA6 // IN2
+#define RIGHT_MOTOR_FORWARD_PIN PA6  // IN1
+#define RIGHT_MOTOR_BACKWARD_PIN PA4 // IN2
 #define RIGHT_MOTOR_PWM_PIN PA5      // ENA - Must be PWM capable
 
 //#define IR_INPUT_PIN               11
@@ -123,14 +123,11 @@
 #define WIRE_SPEED 400000
 
 // For HCSR04 ultrasonic distance sensor
-#define PIN_TRIGGER_OUT_RIGHT PB5
-#define PIN_TRIGGER_OUT_FRONT PB3
-#define PIN_TRIGGER_OUT_LEFT PA10
+#define PIN_TRIGGER_OUT_FRONT PB5
 
 #if !defined(US_SENSOR_SUPPORTS_1_PIN_MODE)
-#define PIN_ECHO_IN_RIGHT PB4
-#define PIN_ECHO_IN_FRONT PA15
-#define PIN_ECHO_IN_LEFT PA9
+#define PIN_ECHO_IN_FRONT PB4
+
 #endif
 //#define PIN_IR_DISTANCE_SENSOR     A3 // Sharp IR distance sensor
 
