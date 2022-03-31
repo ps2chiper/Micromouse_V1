@@ -237,41 +237,41 @@ void MicroMouse::PIDcalculate(boolean left)
     {
         setDirection(STOP);
     }
-    // convert to switch 
-    // feed info into the floodfill algorithim to find heading. 
-    // break down into smooth turns. 
+    // convert to switch
+    // feed info into the floodfill algorithim to find heading.
+    // break down into smooth turns.
     // left T section
-/*     if (wall[left] && !wall[Front] && !wall[Right])
-    {
-    }
-    // dead end
-    else if (wall[left] && wall[Front] && wall[Right])
-    {
-    }
-    // four way section
-    else if (!wall[left] && !wall[Front] && !wall[Right])
-    {
-    }
-    // right T section
-    else if (!wall[left] && !wall[Front] && wall[Right])
-    {
-    }
-    // right only
-    else if (wall[left] && wall[Front] && !wall[Right])
-    {
-    }
-    // T section
-    else if (!wall[left] && wall[Front] && !wall[Right])
-    {
-    }
-    // target found
-    // else if (!wall[left] && wall[Front] && !wall[Right])
-    {
-    }
-    // left only
-    else if (!wall[left] && wall[Front] && wall[Right])
-    {
-    } */
+    /*     if (wall[left] && !wall[Front] && !wall[Right])
+        {
+        }
+        // dead end
+        else if (wall[left] && wall[Front] && wall[Right])
+        {
+        }
+        // four way section
+        else if (!wall[left] && !wall[Front] && !wall[Right])
+        {
+        }
+        // right T section
+        else if (!wall[left] && !wall[Front] && wall[Right])
+        {
+        }
+        // right only
+        else if (wall[left] && wall[Front] && !wall[Right])
+        {
+        }
+        // T section
+        else if (!wall[left] && wall[Front] && !wall[Right])
+        {
+        }
+        // target found
+        // else if (!wall[left] && wall[Front] && !wall[Right])
+        {
+        }
+        // left only
+        else if (!wall[left] && wall[Front] && wall[Right])
+        {
+        } */
 }
 
 void MicroMouse::walls()
@@ -281,9 +281,9 @@ void MicroMouse::walls()
     wall[Left] = Sensor[Left][Average] < wall_threshold;
     wall[Right] = Sensor[Right][Average] < wall_threshold;
     wall[Front] = Sensor[Front][Average] < front_threshold && Sensor[Front][Average] >= 2.0;
-    walls_truth_table= wall[Left] * 100 + wall[Front] * 10 + wall[Right];
-    Serial.print(F("Wall truth table: "));
-    Serial.println(walls_truth_table);
+    // walls_truth_table= wall[Left] * 100 + wall[Front] * 10 + wall[Right];
+    // Serial.print(F("Wall truth table: "));
+    // Serial.println(walls_truth_table);
 }
 
 void MicroMouse::turnright()
@@ -291,7 +291,11 @@ void MicroMouse::turnright()
 
     /*     LMS = baseSpeed; */
 
-    //RMS = LMS * Sensor[Right][Average] / (Sensor[Right][Average] + 11);
+    // RMS = LMS * Sensor[Right][Average] / (Sensor[Right][Average] + 11);
+
+    RobotCarPWMMotorControl.goDistanceMillimeter(100);
+    RobotCarPWMMotorControl.rotate(-90, TURN_FORWARD);
+    RobotCarPWMMotorControl.goDistanceMillimeter(50);
 }
 
 void MicroMouse::turnleft()
@@ -299,7 +303,16 @@ void MicroMouse::turnleft()
     /*
         RMS = baseSpeed; */
 
-    //LMS = RMS * Sensor[Left][Average] / (Sensor[Left][Average] + 11);
+    // LMS = RMS * Sensor[Left][Average] / (Sensor[Left][Average] + 11);
+    do
+    {
+        ReadSensors();
+        walls();
+        PIDcalculate(false);
+    } while (wall[Left]);
+    RobotCarPWMMotorControl.goDistanceMillimeter(100);
+    RobotCarPWMMotorControl.rotate(90, TURN_FORWARD);
+    RobotCarPWMMotorControl.goDistanceMillimeter(50);
 }
 
 // This is a wall hugging mode.
@@ -407,8 +420,8 @@ void MicroMouse::runInLoop()
 
     // measure error & print the result to the serial monitor
 
-    //Serial.print("error=");
-    //Serial.println(totalError);
+    // Serial.print("error=");
+    // Serial.println(totalError);
 }
 
 void MicroMouse::errorDecoder(SHTC3_Status_TypeDef message) // The errorDecoder function prints "SHTC3_Status_TypeDef" resultsin a human-friendly way

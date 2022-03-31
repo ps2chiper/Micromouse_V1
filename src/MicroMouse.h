@@ -30,7 +30,7 @@
 class MicroMouse
 {
 public:
-    // Make sure to addjust some of these to prive. 
+    // Make sure to addjust some of these to prive.
     float Setpoint, Input, Output;
     // double Kp = 1.4, Ki = 0, Kd = 0;
     const double aggKp = 4, aggKi = 0.2, aggKd = 1;
@@ -82,16 +82,16 @@ public:
     // const float D = 0.5;
     // const float I = 0.4;
 
-    // Offest is the distance between the sensors. 
+    // Offest is the distance between the sensors.
     const int offset = 152;
 
     // Ememergency turn threshold
     const int emergency_threshold = 30;
 
-    const int wall_threshold = 100; // MM for Time of Flight Sensors. 
+    const int wall_threshold = 200; // MM for Time of Flight Sensors.
     // int left_threshold = 10 ;
     // int right_threshold = 10 ;
-    const int front_threshold = 5; // CM for UltraSonic Sensors. 
+    const int front_threshold = 5; // CM for UltraSonic Sensors.
 
     // boolean frontwall;
     // boolean leftwall;
@@ -128,6 +128,14 @@ public:
 
     void setTempC(float temp);
     void read_dual_sensors();
+
+    void turnright();
+
+    //---------------------------------------------------------------------------//
+
+    void turnleft();
+
+    //---------------------------------------------------------------------------//
 
 private:
     void setID();
@@ -184,13 +192,6 @@ private:
 
     //---------------------------------------------------------------------------//
 
-    void turnright();
-
-    //---------------------------------------------------------------------------//
-
-    void turnleft();
-
-    //---------------------------------------------------------------------------//
     // void pid_start();
 
     void updateTempC();

@@ -49,12 +49,15 @@ void setup()
   Serial.print("TempC is: ");
   Serial.println(Runner.getTempC());
 
-
+  Runner.turnleft();
+  //delay(1000);
+  //Runner.turnright(); 
 }
 
 void loop()
 {
 
-  Runner.runInLoop();
+  
+  //Runner.runInLoop();
 }
 
